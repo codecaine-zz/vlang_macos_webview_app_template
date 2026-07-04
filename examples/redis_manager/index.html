@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redis CRUD Manager</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #060709;
+            --sidebar-bg: rgba(10, 12, 18, 0.75);
+            --panel-bg: rgba(18, 22, 33, 0.45);
+            --border-color: rgba(255, 255, 255, 0.05);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-red: #ef4444;
+            --accent-green: #10b981;
+            --accent-purple: #a855f7;
+            --accent-blue: #3b82f6;
+            --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 0% 100%, rgba(239, 68, 68, 0.05) 0px, transparent 40%),
+                radial-gradient(at 100% 0%, rgba(59, 130, 246, 0.05) 0px, transparent 40%);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            user-select: none;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Sidebar Keys Panel */
+        .sidebar {
+            width: 320px;
+            background: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            backdrop-filter: blur(40px);
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+        }
+
+        .sidebar-header {
+            padding: 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .brand-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-blue));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 16px rgba(239, 68, 68, 0.3);
+        }
+
+        .status-badge {
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-badge.connected {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--accent-green);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .status-badge.disconnected {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--accent-red);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            cursor: pointer;
+        }
+
+        .search-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .search-input {
+            flex-grow: 1;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            padding: 8px 12px;
+            outline: none;
+            transition: all 0.25s;
+        }
+
+        .search-input:focus {
+            border-color: var(--accent-blue);
+        }
+
+        .btn-plus {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--accent-blue), #60a5fa);
+            color: #0b0f19;
+            border: none;
+            font-size: 1.15rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .btn-plus:hover {
+            transform: scale(1.03);
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+        }
+
+        .keys-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .key-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            border-radius: 10px;
+            background: transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .key-item:hover {
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--text-primary);
+        }
+
+        .key-item.active {
+            background: rgba(59, 130, 246, 0.08);
+            border-color: rgba(59, 130, 246, 0.2);
+            color: var(--accent-blue);
+        }
+
+        .key-item-name {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 220px;
+        }
+
+        .key-type-pill {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-secondary);
+        }
+
+        .key-item.active .key-type-pill {
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--accent-blue);
+        }
+
+        .sidebar-footer {
+            padding: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .quit-btn {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(244, 63, 94, 0.15);
+            background: rgba(244, 63, 94, 0.06);
+            color: var(--accent-red);
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .quit-btn:hover {
+            background: rgba(244, 63, 94, 0.12);
+            border-color: rgba(244, 63, 94, 0.35);
+        }
+
+        /* Detail Workspace */
+        .workspace {
+            flex-grow: 1;
+            padding: 40px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .detail-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 32px;
+            backdrop-filter: blur(30px);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+            display: none;
+            flex-direction: column;
+            gap: 24px;
+            animation: fadeIn 0.35s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 20px;
+        }
+
+        .detail-title {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .detail-keyname {
+            font-family: var(--font-mono);
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .detail-meta {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .meta-pill {
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 6px;
+            text-transform: uppercase;
+        }
+
+        .meta-pill.type-string {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--accent-blue);
+        }
+
+        .meta-pill.ttl {
+            background: rgba(245, 158, 11, 0.1);
+            color: #fbbf24;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .textarea-value {
+            width: 100%;
+            height: 180px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            color: var(--text-primary);
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            line-height: 1.6;
+            outline: none;
+            resize: none;
+            transition: border-color 0.25s;
+        }
+
+        .textarea-value:focus {
+            border-color: var(--accent-blue);
+        }
+
+        .input-ttl {
+            width: 150px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            padding: 8px 12px;
+            outline: none;
+        }
+
+        .action-row {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+
+        .btn-save {
+            background: linear-gradient(135deg, var(--accent-blue), #60a5fa);
+            color: #0b0f19;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 24px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+            transition: all 0.2s;
+        }
+
+        .btn-save:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.35);
+        }
+
+        .btn-delete {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--accent-red);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 10px;
+            padding: 12px 20px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-delete:hover {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.35);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state svg {
+            width: 48px;
+            height: 48px;
+            stroke: var(--text-secondary);
+            stroke-width: 1.5;
+            fill: none;
+        }
+
+        /* Reconnect Alert Panel */
+        .alert-panel {
+            background: rgba(239, 68, 68, 0.03);
+            border: 1px solid rgba(239, 68, 68, 0.15);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .alert-panel h2 {
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: var(--accent-red);
+        }
+
+        .alert-panel p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .btn-reconnect {
+            background: var(--accent-red);
+            color: #ffffff;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 24px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+        }
+
+        .btn-reconnect:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(239, 68, 68, 0.3);
+        }
+
+        /* Key Creator Modal overlay */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            z-index: 100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal {
+            background: #0d1117;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            width: 480px;
+            padding: 32px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .modal-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .btn-cancel {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 10px 20px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        .btn-cancel:hover {
+            background: rgba(255,255,255,0.02);
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="brand">
+                <div class="brand-title">
+                    <div class="brand-icon">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#040810" stroke-width="3"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    </div>
+                    <span>Redis CRUD</span>
+                </div>
+                <div class="status-badge disconnected" id="status-badge" onclick="checkConn()">Checking...</div>
+            </div>
+            <div class="search-row">
+                <input class="search-input" type="text" id="search-input" placeholder="Search keys..." oninput="filterKeys()">
+                <button class="btn-plus" onclick="openCreateModal()">+</button>
+            </div>
+        </div>
+
+        <div class="keys-list" id="keys-container">
+            <!-- Dynamically populated -->
+        </div>
+
+        <div class="sidebar-footer">
+            <button class="quit-btn" onclick="window.quitApp()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+                <span>Quit App</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Workspace Main Area -->
+    <div class="workspace" id="workspace-area">
+        <!-- Status: Disconnected Warning Panel -->
+        <div class="alert-panel" id="conn-alert">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent-red)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <h2>Redis Server Not Found</h2>
+            <p>Could not connect to Redis at <code>127.0.0.1:6379</code>. Please ensure your local Redis server is running (e.g. run <code>redis-server</code> in your terminal).</p>
+            <button class="btn-reconnect" onclick="checkConn()">Retry Connection</button>
+        </div>
+
+        <!-- Status: Connected, No Key Selected -->
+        <div class="empty-state" id="empty-state">
+            <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+            <span>Select a key from the sidebar to inspect or modify it, or click "+" to write a new record.</span>
+        </div>
+
+        <!-- Key detail panel -->
+        <div class="detail-card" id="detail-card">
+            <div class="detail-header">
+                <div class="detail-title">
+                    <span class="detail-keyname" id="key-title">key_name</span>
+                    <div class="detail-meta">
+                        <span class="meta-pill type-string" id="key-type">string</span>
+                        <span class="meta-pill ttl" id="key-ttl-pill">TTL: Persistent</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Key Value</label>
+                <textarea class="textarea-value" id="key-value-input" placeholder="Enter key value payload..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Key Expiration (TTL in seconds, -1 for persistent)</label>
+                <input class="input-ttl" type="number" id="key-ttl-input" value="-1">
+            </div>
+
+            <div class="action-row">
+                <button class="btn-save" onclick="saveActiveKey()">Save Changes</button>
+                <button class="btn-delete" onclick="deleteActiveKey()">Delete Key</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Key Modal -->
+    <div class="modal-overlay" id="create-modal" onclick="if(event.target === this) closeCreateModal()">
+        <div class="modal">
+            <span class="modal-title">Write New Redis Key</span>
+            
+            <div class="form-group">
+                <label class="form-label">Key Name</label>
+                <input class="input-dark" type="text" id="create-key-name" placeholder="e.g. user:session:100" style="font-family: var(--font-mono);">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Value</label>
+                <textarea class="textarea-value" id="create-key-value" placeholder="Enter text or JSON string..." style="height: 120px;"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Expiration (TTL in seconds, -1 for persistent)</label>
+                <input class="input-ttl" type="number" id="create-key-ttl" value="-1">
+            </div>
+
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="closeCreateModal()">Cancel</button>
+                <button class="btn-save" onclick="createKey()">Create Key</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Confirm Modal -->
+    <div class="modal-overlay" id="confirm-modal" style="display:none; z-index:200;">
+        <div class="modal" style="border-color: rgba(239, 68, 68, 0.15); max-width: 400px;">
+            <span class="modal-title" style="color: var(--accent-red); display:flex; align-items:center; gap:8px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                Confirm Action
+            </span>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6;" id="confirm-message">Are you sure you want to proceed?</p>
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="closeConfirmModal()">Cancel</button>
+                <button class="btn-save" style="background:linear-gradient(135deg, var(--accent-red), #fda4af); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);" id="confirm-yes-btn">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Alert Modal -->
+    <div class="modal-overlay" id="alert-modal" style="display:none; z-index:300;">
+        <div class="modal" style="max-width: 380px;">
+            <span class="modal-title" id="alert-title">Notification</span>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6;" id="alert-message"></p>
+            <div class="modal-buttons">
+                <button class="btn-save" onclick="closeAlertModal()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isConnected = false;
+        let activeKey = '';
+        let keysList = [];
+
+        async function checkConn() {
+            const badge = document.getElementById('status-badge');
+            badge.innerText = "Connecting...";
+            badge.className = "status-badge disconnected";
+
+            try {
+                const resJson = await window.checkConnection();
+                const res = JSON.parse(resJson);
+
+                if (res.status === "connected") {
+                    isConnected = true;
+                    badge.innerText = "Connected";
+                    badge.className = "status-badge connected";
+                    document.getElementById('conn-alert').style.display = 'none';
+                    loadKeys();
+                } else {
+                    handleConnectionFailure();
+                }
+            } catch (e) {
+                handleConnectionFailure();
+            }
+        }
+
+        function handleConnectionFailure() {
+            isConnected = false;
+            const badge = document.getElementById('status-badge');
+            badge.innerText = "Offline";
+            badge.className = "status-badge disconnected";
+            
+            document.getElementById('conn-alert').style.display = 'flex';
+            document.getElementById('empty-state').style.display = 'none';
+            document.getElementById('detail-card').style.display = 'none';
+            document.getElementById('keys-container').innerHTML = '';
+        }
+
+        async function loadKeys() {
+            if (!isConnected) return;
+            try {
+                const resJson = await window.listKeys('*');
+                if (resJson.startsWith('{"error"')) {
+                    console.error(resJson);
+                    return;
+                }
+                keysList = JSON.parse(resJson);
+                renderKeys(keysList);
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function renderKeys(keys) {
+            const container = document.getElementById('keys-container');
+            if (keys.length === 0) {
+                container.innerHTML = `<div style="text-align: center; color: var(--text-secondary); font-size: 0.8rem; padding-top: 20px; font-style: italic;">No keys found.</div>`;
+                return;
+            }
+
+            container.innerHTML = keys.map(key => {
+                const activeClass = key === activeKey ? 'active' : '';
+                const escapedKey = key.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                return `
+                    <div class="key-item ${activeClass}" onclick="selectKey('${escapedKey}')">
+                        <span class="key-item-name">${escapeHtml(key)}</span>
+                        <span class="key-type-pill">str</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function selectKey(key) {
+            if (!isConnected) return;
+            activeKey = key;
+            
+            document.querySelectorAll('.key-item').forEach(el => el.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+
+            try {
+                const detailJson = await window.getKeyDetail(key);
+                const detail = JSON.parse(detailJson);
+
+                if (detail.error) {
+                    showAlert("Error", detail.error);
+                    return;
+                }
+
+                document.getElementById('key-title').innerText = detail.key;
+                document.getElementById('key-type').innerText = detail.type;
+                document.getElementById('key-value-input').value = detail.value;
+                document.getElementById('key-ttl-input').value = detail.ttl;
+
+                const ttlPill = document.getElementById('key-ttl-pill');
+                if (detail.ttl === -1) {
+                    ttlPill.innerText = "TTL: Persistent";
+                    ttlPill.style.background = "rgba(16, 185, 129, 0.1)";
+                    ttlPill.style.color = "var(--accent-green)";
+                } else {
+                    ttlPill.innerText = `TTL: ${detail.ttl}s`;
+                    ttlPill.style.background = "rgba(245, 158, 11, 0.1)";
+                    ttlPill.style.color = "#fbbf24";
+                }
+
+                document.getElementById('empty-state').style.display = 'none';
+                document.getElementById('detail-card').style.display = 'flex';
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function saveActiveKey() {
+            if (!isConnected || !activeKey) return;
+
+            const value = document.getElementById('key-value-input').value;
+            const ttl = parseInt(document.getElementById('key-ttl-input').value);
+
+            try {
+                const resJson = await window.saveKey(activeKey, value, ttl.toString());
+                const res = JSON.parse(resJson);
+
+                if (res.error) {
+                    showAlert("Error", res.error);
+                } else {
+                    showAlert("Success", "Key saved successfully!");
+                    selectKey(activeKey);
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function deleteActiveKey() {
+            if (!isConnected || !activeKey) return;
+            showConfirm(`Are you sure you want to delete the key "${activeKey}"?`, async () => {
+                try {
+                    const resJson = await window.deleteKey(activeKey);
+                    const res = JSON.parse(resJson);
+
+                    if (res.error) {
+                        showAlert("Error", res.error);
+                    } else {
+                        activeKey = '';
+                        document.getElementById('detail-card').style.display = 'none';
+                        document.getElementById('empty-state').style.display = 'flex';
+                        loadKeys();
+                    }
+                } catch (e) {
+                    console.error(e);
+                }
+            });
+        }
+
+        function filterKeys() {
+            const query = document.getElementById('search-input').value.toLowerCase();
+            const filtered = keysList.filter(k => k.toLowerCase().includes(query));
+            renderKeys(filtered);
+        }
+
+        // Create Modal Actions
+        function openCreateModal() {
+            if (!isConnected) {
+                showAlert("Warning", "Please connect to Redis first.");
+                return;
+            }
+            document.getElementById('create-key-name').value = '';
+            document.getElementById('create-key-value').value = '';
+            document.getElementById('create-key-ttl').value = '-1';
+            document.getElementById('create-modal').style.display = 'flex';
+        }
+
+        function closeCreateModal() {
+            document.getElementById('create-modal').style.display = 'none';
+        }
+
+        async function createKey() {
+            const key = document.getElementById('create-key-name').value.trim();
+            const value = document.getElementById('create-key-value').value;
+            const ttl = parseInt(document.getElementById('create-key-ttl').value);
+
+            if (!key) {
+                showAlert("Warning", "Please enter a key name.");
+                return;
+            }
+
+            try {
+                const resJson = await window.saveKey(key, value, ttl.toString());
+                const res = JSON.parse(resJson);
+
+                if (res.error) {
+                    showAlert("Error", res.error);
+                } else {
+                    closeCreateModal();
+                    loadKeys();
+                    setTimeout(() => {
+                        // Attempt to select the newly created key if in lists
+                        const items = document.querySelectorAll('.key-item-name');
+                        for (let item of items) {
+                            if (item.innerText === key) {
+                                item.parentElement.click();
+                                break;
+                            }
+                        }
+                    }, 200);
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        let confirmCallback = null;
+
+        function showConfirm(message, callback) {
+            document.getElementById('confirm-message').innerText = message;
+            confirmCallback = callback;
+            document.getElementById('confirm-modal').style.display = 'flex';
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirm-modal').style.display = 'none';
+            confirmCallback = null;
+        }
+
+        document.getElementById('confirm-yes-btn').addEventListener('click', () => {
+            if (confirmCallback) confirmCallback();
+            closeConfirmModal();
+        });
+
+        function showAlert(title, message) {
+            document.getElementById('alert-title').innerText = title;
+            document.getElementById('alert-message').innerText = message;
+            document.getElementById('alert-modal').style.display = 'flex';
+        }
+
+        function closeAlertModal() {
+            document.getElementById('alert-modal').style.display = 'none';
+        }
+
+        function escapeHtml(text) {
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // Check connection on load
+        checkConn();
+    </script>
+</body>
+</html>

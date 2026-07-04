@@ -6,7 +6,7 @@ fn quit_app(e &webview.Event) string {
 }
 
 fn main() {
-	html := $embed_file('index.html').to_string()
+	html := $embed_file('@DIR/index.html').to_string()
 
 	mut w := webview.create(debug: true)
 	w.bind('quitApp', quit_app)

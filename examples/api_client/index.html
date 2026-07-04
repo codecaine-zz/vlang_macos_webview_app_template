@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Client Playground</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #060709;
+            --sidebar-bg: rgba(10, 12, 18, 0.7);
+            --panel-bg: rgba(18, 22, 33, 0.45);
+            --border-color: rgba(255, 255, 255, 0.05);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-cyan: #00f2fe;
+            --accent-blue: #3b82f6;
+            --accent-purple: #a855f7;
+            --accent-green: #10b981;
+            --accent-yellow: #f59e0b;
+            --accent-red: #f43f5e;
+            --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.08) 0px, transparent 45%),
+                radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.08) 0px, transparent 45%);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            user-select: none;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Sidebar History */
+        .sidebar {
+            width: 280px;
+            background: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            backdrop-filter: blur(40px);
+            display: flex;
+            flex-direction: column;
+            padding: 28px 16px;
+            z-index: 10;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            font-size: 1.15rem;
+            letter-spacing: -0.5px;
+            margin-bottom: 28px;
+            padding-left: 8px;
+        }
+
+        .brand-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 16px rgba(0, 242, 254, 0.3);
+        }
+
+        .brand-text {
+            background: linear-gradient(135deg, #ffffff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .section-header {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+            padding-left: 8px;
+            font-weight: 700;
+        }
+
+        .history-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding-right: 4px;
+        }
+
+        .history-item {
+            padding: 12px 14px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .history-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.08);
+            transform: translateY(-1px);
+        }
+
+        .history-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .history-method {
+            font-size: 0.75rem;
+            font-weight: 800;
+            font-family: var(--font-mono);
+            letter-spacing: 0.5px;
+        }
+
+        .method-get { color: var(--accent-green); }
+        .method-post { color: var(--accent-cyan); }
+        .method-put { color: var(--accent-yellow); }
+        .method-delete { color: var(--accent-red); }
+
+        .history-status {
+            font-size: 0.75rem;
+            font-family: var(--font-mono);
+            font-weight: 600;
+        }
+
+        .history-url {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-family: var(--font-mono);
+        }
+
+        .quit-btn {
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(244, 63, 94, 0.15);
+            background: rgba(244, 63, 94, 0.06);
+            color: var(--accent-red);
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            margin-top: 16px;
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .quit-btn:hover {
+            background: rgba(244, 63, 94, 0.12);
+            border-color: rgba(244, 63, 94, 0.35);
+        }
+
+        /* Workspace Workspace */
+        .workspace {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .header {
+            height: 80px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+            background: rgba(6, 7, 9, 0.4);
+            backdrop-filter: blur(15px);
+        }
+
+        .header-title h1 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #ffffff, #cbd5e1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .workspace-split {
+            flex-grow: 1;
+            display: flex;
+            overflow: hidden;
+            padding: 32px;
+            gap: 28px;
+        }
+
+        .pane {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            height: 100%;
+        }
+
+        .card {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 24px;
+            backdrop-filter: blur(30px);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 
+                0 4px 30px rgba(0, 0, 0, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            position: relative;
+        }
+
+        .card-flex {
+            flex-grow: 1;
+            overflow: hidden;
+        }
+
+        .card-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Request Address Bar */
+        .req-bar {
+            display: flex;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 6px;
+        }
+
+        .select-method {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: var(--font-mono);
+            font-weight: 700;
+            padding: 0 14px;
+            outline: none;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .select-method:focus {
+            border-color: var(--accent-blue);
+        }
+
+        .input-url {
+            flex-grow: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            padding: 10px;
+            outline: none;
+        }
+
+        .btn-send {
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+            color: #040810;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            padding: 0 24px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 15px rgba(0, 242, 254, 0.25);
+        }
+
+        .btn-send:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(0, 242, 254, 0.35);
+        }
+
+        /* Tab Layout */
+        .tabs {
+            display: flex;
+            gap: 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            padding-bottom: 10px;
+            margin-bottom: 16px;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            padding: 6px 14px;
+            border-radius: 8px;
+            transition: all 0.25s ease;
+            border: 1px solid transparent;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .tab-btn.active {
+            color: var(--accent-cyan);
+            background: rgba(0, 242, 254, 0.06);
+            border-color: rgba(0, 242, 254, 0.15);
+        }
+
+        .tab-btn-purple.active {
+            color: var(--accent-purple);
+            background: rgba(168, 85, 247, 0.06);
+            border-color: rgba(168, 85, 247, 0.15);
+        }
+
+        .textarea-editor {
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            color: var(--text-primary);
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            line-height: 1.6;
+            resize: none;
+            outline: none;
+            user-select: text;
+            transition: border-color 0.25s ease;
+        }
+
+        .textarea-editor:focus {
+            border-color: rgba(0, 242, 254, 0.25);
+        }
+
+        /* Response Panels */
+        .response-meta {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .meta-pill {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            border: 1px solid transparent;
+        }
+
+        .pill-status-success {
+            background: rgba(16, 185, 129, 0.06);
+            color: var(--accent-green);
+            border-color: rgba(16, 185, 129, 0.15);
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.1);
+        }
+
+        .pill-status-error {
+            background: rgba(244, 63, 94, 0.06);
+            color: var(--accent-red);
+            border-color: rgba(244, 63, 94, 0.15);
+            box-shadow: 0 0 10px rgba(244, 63, 94, 0.1);
+        }
+
+        .pill-status-warning {
+            background: rgba(245, 158, 11, 0.06);
+            color: var(--accent-yellow);
+            border-color: rgba(245, 158, 11, 0.15);
+        }
+
+        .pill-time {
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text-secondary);
+            border-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .response-viewer {
+            flex-grow: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .pre-container {
+            flex-grow: 1;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            overflow: auto;
+            position: relative;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
+        }
+
+        .code-block {
+            margin: 0;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            line-height: 1.6;
+            color: #e2e8f0;
+            white-space: pre-wrap;
+            user-select: text;
+        }
+
+        /* Overlay Loader */
+        .loader-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(6, 7, 9, 0.7);
+            backdrop-filter: blur(5px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+            border-radius: 20px;
+        }
+
+        .loader {
+            border: 3px solid rgba(255, 255, 255, 0.03);
+            border-top: 3px solid var(--accent-cyan);
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            animation: spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.16);
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar History -->
+    <div class="sidebar">
+        <div class="brand">
+            <div class="brand-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#040810" stroke-width="3"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <span class="brand-text">V-Rest Client</span>
+        </div>
+        <div class="section-header">Request History</div>
+        <div class="history-list" id="history-container">
+            <div style="text-align: center; color: var(--text-secondary); font-size: 0.8rem; margin-top: 24px; font-style: italic;">No requests yet.</div>
+        </div>
+        <button class="quit-btn" onclick="window.quitApp()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+            <span>Quit App</span>
+        </button>
+    </div>
+
+    <!-- Main Workspace -->
+    <div class="workspace">
+        <div class="header">
+            <div class="header-title">
+                <h1>REST API Playground</h1>
+            </div>
+        </div>
+
+        <div class="workspace-split">
+            <!-- Left Pane: Request Designer -->
+            <div class="pane">
+                <div class="card">
+                    <div class="card-title">Send Request</div>
+                    <div class="req-bar">
+                        <select class="select-method" id="req-method">
+                            <option value="GET">GET</option>
+                            <option value="POST">POST</option>
+                            <option value="PUT">PUT</option>
+                            <option value="DELETE">DELETE</option>
+                            <option value="PATCH">PATCH</option>
+                        </select>
+                        <input class="input-url" type="text" id="req-url" value="https://httpbin.org/get" placeholder="Enter endpoint URL...">
+                        <button class="btn-send" onclick="sendReq()">Send</button>
+                    </div>
+                </div>
+
+                <div class="card card-flex">
+                    <div class="tabs">
+                        <button class="tab-btn active" onclick="switchReqTab('headers')">Headers</button>
+                        <button class="tab-btn" onclick="switchReqTab('body')">JSON Body</button>
+                    </div>
+                    
+                    <div id="req-tab-headers" style="flex-grow: 1; height: calc(100% - 40px); display: flex;">
+                        <textarea class="textarea-editor" id="req-headers" placeholder="Content-Type: application/json&#10;Authorization: Bearer my-token-value&#10;X-Custom-Header: custom_value_here"></textarea>
+                    </div>
+
+                    <div id="req-tab-body" style="flex-grow: 1; height: calc(100% - 40px); display: none;">
+                        <textarea class="textarea-editor" id="req-body" placeholder="{&#10;  &quot;key&quot;: &quot;value&quot;&#10;}"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Pane: Response Viewer -->
+            <div class="pane">
+                <div class="card card-flex">
+                    <div class="loader-overlay" id="loader">
+                        <div class="loader"></div>
+                    </div>
+
+                    <div class="card-title">
+                        <span>Response Details</span>
+                        <div class="response-meta" id="resp-meta-container" style="display: none;">
+                            <span class="meta-pill" id="resp-status">200 OK</span>
+                            <span class="meta-pill pill-time" id="resp-time">0 ms</span>
+                        </div>
+                    </div>
+
+                    <div class="response-viewer">
+                        <div class="tabs">
+                            <button class="tab-btn tab-btn-purple active" onclick="switchRespTab('body')">Response Body</button>
+                            <button class="tab-btn tab-btn-purple" onclick="switchRespTab('headers')">Headers</button>
+                        </div>
+
+                        <div id="resp-tab-body" class="pre-container">
+                            <pre class="code-block"><code id="resp-body" style="color:var(--text-secondary); font-style:italic;">No response received yet. Select a method, enter a URL, and click Send.</code></pre>
+                        </div>
+
+                        <div id="resp-tab-headers" class="pre-container" style="display: none;">
+                            <pre class="code-block"><code id="resp-headers" style="color:var(--text-secondary); font-style:italic;">Response headers will be displayed here.</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let requestHistory = [];
+
+        function switchReqTab(tabName) {
+            document.querySelectorAll('#req-tab-headers, #req-tab-body').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.pane:first-child .tab-btn').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(`req-tab-${tabName}`).style.display = 'flex';
+            event.currentTarget.classList.add('active');
+        }
+
+        function switchRespTab(tabName) {
+            document.querySelectorAll('#resp-tab-body, #resp-tab-headers').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.pane:last-child .tab-btn').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(`resp-tab-${tabName}`).style.display = 'block';
+            event.currentTarget.classList.add('active');
+        }
+
+        async function sendReq() {
+            const url = document.getElementById('req-url').value.trim();
+            const method = document.getElementById('req-method').value;
+            const headers = document.getElementById('req-headers').value;
+            const body = document.getElementById('req-body').value;
+            const loader = document.getElementById('loader');
+            const meta = document.getElementById('resp-meta-container');
+
+            if (!url) {
+                alert("Please enter a valid URL.");
+                return;
+            }
+
+            loader.style.display = 'flex';
+
+            try {
+                const res = await window.sendRequest(url, method, headers, body);
+                
+                const statusPill = document.getElementById('resp-status');
+                statusPill.innerText = `${res.status_code} ${res.status_msg}`;
+                
+                statusPill.className = "meta-pill";
+                if (res.status_code >= 200 && res.status_code < 300) {
+                    statusPill.classList.add('pill-status-success');
+                } else if (res.status_code >= 400) {
+                    statusPill.classList.add('pill-status-error');
+                } else {
+                    statusPill.classList.add('pill-status-warning');
+                }
+
+                document.getElementById('resp-time').innerText = `${res.time_ms} ms`;
+                meta.style.display = 'flex';
+
+                const bodyContainer = document.getElementById('resp-body');
+                try {
+                    const parsedJson = JSON.parse(res.body);
+                    bodyContainer.innerText = JSON.stringify(parsedJson, null, 2);
+                } catch (e) {
+                    bodyContainer.innerText = res.body || '[Empty Response Body]';
+                }
+
+                document.getElementById('resp-headers').innerText = res.headers || '[No headers received]';
+
+                addToHistory(method, url, res.status_code);
+
+            } catch (err) {
+                document.getElementById('resp-body').innerText = "V Backend Request Failed:\n" + err;
+                document.getElementById('resp-headers').innerText = "";
+                meta.style.display = 'none';
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+
+        function addToHistory(method, url, status) {
+            requestHistory.unshift({ method, url, status });
+            if (requestHistory.length > 20) {
+                requestHistory.pop();
+            }
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const container = document.getElementById('history-container');
+            if (requestHistory.length === 0) {
+                container.innerHTML = `<div style="text-align: center; color: var(--text-secondary); font-size: 0.8rem; margin-top: 24px; font-style: italic;">No requests yet.</div>`;
+                return;
+            }
+
+            container.innerHTML = requestHistory.map((item, index) => {
+                const methodClass = `method-${item.method.toLowerCase()}`;
+                
+                let statusClass = 'pill-status-warning';
+                if (item.status >= 200 && item.status < 300) statusClass = 'pill-status-success';
+                else if (item.status >= 400) statusClass = 'pill-status-error';
+
+                return `
+                    <div class="history-item" onclick="loadHistoryItem(${index})">
+                        <div class="history-meta">
+                            <span class="history-method ${methodClass}">${item.method}</span>
+                            <span class="history-status ${statusClass}" style="padding: 2px 6px; border-radius: 4px; font-size: 0.65rem;">${item.status}</span>
+                        </div>
+                        <div class="history-url">${escapeHtml(item.url)}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function loadHistoryItem(index) {
+            const item = requestHistory[index];
+            document.getElementById('req-url').value = item.url;
+            document.getElementById('req-method').value = item.method;
+        }
+
+        function escapeHtml(text) {
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Monitor & Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #060709;
+            --panel-bg: rgba(18, 22, 33, 0.45);
+            --panel-hover: rgba(255, 255, 255, 0.03);
+            --border-color: rgba(255, 255, 255, 0.05);
+            --border-glow: rgba(0, 242, 254, 0.15);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-cyan: #00f2fe;
+            --accent-purple: #a855f7;
+            --accent-green: #10b981;
+            --accent-red: #f43f5e;
+            --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(0, 242, 254, 0.08) 0px, transparent 45%),
+                radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.08) 0px, transparent 45%);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            user-select: none;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background: rgba(10, 12, 18, 0.7);
+            border-right: 1px solid var(--border-color);
+            backdrop-filter: blur(40px);
+            display: flex;
+            flex-direction: column;
+            padding: 28px 20px;
+            z-index: 10;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            font-size: 1.15rem;
+            letter-spacing: -0.5px;
+            margin-bottom: 32px;
+            padding-left: 8px;
+        }
+
+        .brand-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 16px rgba(0, 242, 254, 0.3);
+        }
+
+        .brand-text {
+            background: linear-gradient(135deg, #ffffff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex-grow: 1;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 11px 16px;
+            border-radius: 12px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid transparent;
+        }
+
+        .nav-item svg {
+            width: 18px;
+            height: 18px;
+            stroke: currentColor;
+            stroke-width: 2;
+            fill: none;
+            transition: stroke 0.25s;
+        }
+
+        .nav-item:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.03);
+            border-color: rgba(255, 255, 255, 0.02);
+        }
+
+        .nav-item.active {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--border-color);
+            color: var(--text-primary);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-item.active svg {
+            stroke: var(--accent-cyan);
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            border-top: 1px solid var(--border-color);
+            padding-top: 20px;
+        }
+
+        .quit-btn {
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(244, 63, 94, 0.15);
+            background: rgba(244, 63, 94, 0.06);
+            color: var(--accent-red);
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .quit-btn:hover {
+            background: rgba(244, 63, 94, 0.12);
+            border-color: rgba(244, 63, 94, 0.35);
+        }
+
+        /* Main Workspace */
+        .main-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .header {
+            height: 80px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 40px;
+            background: rgba(6, 7, 9, 0.4);
+            backdrop-filter: blur(15px);
+        }
+
+        .header-title h1 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #ffffff, #cbd5e1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .system-meta {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            display: flex;
+            gap: 24px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-family: var(--font-mono);
+        }
+
+        .meta-item strong {
+            color: var(--text-primary);
+        }
+
+        .content-area {
+            flex-grow: 1;
+            padding: 40px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* Premium Dashboard Cards */
+        .card {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 28px;
+            backdrop-filter: blur(30px);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 
+                0 4px 30px rgba(0, 0, 0, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(255, 255, 255, 0.08);
+            box-shadow: 
+                0 10px 40px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+
+        .card-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .col-4 { grid-column: span 4; }
+        .col-8 { grid-column: span 8; }
+        .col-12 { grid-column: span 12; }
+
+        /* Smooth animated gauges */
+        .gauge-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            margin: 10px 0 20px;
+        }
+
+        .gauge-svg {
+            transform: rotate(-90deg);
+            filter: drop-shadow(0 0 12px rgba(0, 242, 254, 0.15));
+        }
+
+        .gauge-svg-purple {
+            filter: drop-shadow(0 0 12px rgba(168, 85, 247, 0.15));
+        }
+
+        .gauge-bg {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.02);
+            stroke-width: 8;
+        }
+
+        .gauge-fill {
+            fill: none;
+            stroke: url(#cyan-gradient);
+            stroke-width: 8;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.8s cubic-bezier(0.2, 1, 0.2, 1);
+        }
+
+        .gauge-fill-purple {
+            stroke: url(#purple-gradient);
+        }
+
+        .gauge-val {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .gauge-num {
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -1.5px;
+            font-family: var(--font-mono);
+            background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .gauge-unit {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 700;
+            margin-top: -4px;
+        }
+
+        .gauge-meta-list {
+            margin-top: auto;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            border-top: 1px solid rgba(255, 255, 255, 0.03);
+            padding-top: 16px;
+        }
+
+        .gauge-meta-item strong {
+            color: var(--text-primary);
+            font-family: var(--font-mono);
+        }
+
+        /* Disk Details */
+        .disk-details {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            justify-content: center;
+            height: 100%;
+        }
+
+        .disk-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .disk-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .disk-value {
+            font-weight: 700;
+            font-size: 1.15rem;
+            font-family: var(--font-mono);
+        }
+
+        .progress-bar-container {
+            margin-top: 12px;
+        }
+
+        .progress-bar-bg {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 6px;
+            overflow: hidden;
+            width: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.02);
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+            width: 0%;
+            border-radius: 6px;
+            transition: width 0.8s cubic-bezier(0.2, 1, 0.2, 1);
+            box-shadow: 0 0 10px rgba(0, 242, 254, 0.3);
+        }
+
+        /* Beautiful Process Table */
+        .table-container {
+            overflow-y: auto;
+            max-height: 400px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.85rem;
+        }
+
+        th {
+            color: var(--text-secondary);
+            font-weight: 600;
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            background: #0f121d;
+            z-index: 1;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 14px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.01);
+            color: var(--text-primary);
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.015);
+        }
+
+        .proc-name {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: #e2e8f0;
+            max-width: 320px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            font-family: var(--font-mono);
+        }
+
+        .badge-cyan {
+            background: rgba(0, 242, 254, 0.06);
+            color: var(--accent-cyan);
+            border: 1px solid rgba(0, 242, 254, 0.15);
+        }
+
+        .badge-purple {
+            background: rgba(168, 85, 247, 0.06);
+            color: var(--accent-purple);
+            border: 1px solid rgba(168, 85, 247, 0.15);
+        }
+
+        /* Ping Console */
+        .ping-form {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .input-dark {
+            flex-grow: 1;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: var(--text-primary);
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            outline: none;
+            transition: all 0.25s ease;
+        }
+
+        .input-dark:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 12px rgba(0, 242, 254, 0.1);
+        }
+
+        .btn-cyan {
+            background: linear-gradient(135deg, var(--accent-cyan), #00b8fe);
+            color: #040810;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 24px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 15px rgba(0, 242, 254, 0.25);
+        }
+
+        .btn-cyan:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(0, 242, 254, 0.35);
+        }
+
+        .console-output {
+            background: #040508;
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 20px;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: var(--accent-green);
+            min-height: 220px;
+            max-height: 280px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.8);
+            line-height: 1.6;
+        }
+
+        /* Views */
+        .view-section {
+            display: none;
+            animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .view-section.active {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 28px;
+            width: 100%;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.16);
+        }
+    </style>
+</head>
+<body>
+    <!-- Gradients definition for SVG gauges -->
+    <svg style="width:0;height:0;position:absolute;" aria-hidden="true" focusable="false">
+        <linearGradient id="cyan-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#00f2fe" />
+            <stop offset="100%" stop-color="#3b82f6" />
+        </linearGradient>
+        <linearGradient id="purple-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#a855f7" />
+            <stop offset="100%" stop-color="#ec4899" />
+        </linearGradient>
+    </svg>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="brand">
+            <div class="brand-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#040810" stroke-width="3"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <span class="brand-text">V-Monitor</span>
+        </div>
+        <div class="nav-menu">
+            <div class="nav-item active" onclick="switchView('dashboard')">
+                <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+                <span>Dashboard</span>
+            </div>
+            <div class="nav-item" onclick="switchView('processes')">
+                <svg viewBox="0 0 24 24"><path d="M12 20h9M3 20v-8c0-1.1.9-2 2-2h4M3 20h6M9 20v-4c0-1.1.9-2 2-2h2c1.1 0 2 .9 2 2v4M15 20h6M15 20v-6c0-1.1.9-2 2-2h2c1.1 0 2 .9 2 2v4"/></svg>
+                <span>Processes</span>
+            </div>
+            <div class="nav-item" onclick="switchView('network')">
+                <svg viewBox="0 0 24 24"><path d="M5 12.5a5 5 0 0 1 7-7 5 5 0 0 1 7 7M12 18.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Z"/></svg>
+                <span>Network Tester</span>
+            </div>
+        </div>
+        <div class="sidebar-footer">
+            <button class="quit-btn" onclick="window.quitApp()">
+                <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+                <span>Quit App</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <div class="header">
+            <div class="header-title">
+                <h1 id="view-title">System Dashboard</h1>
+            </div>
+            <div class="system-meta">
+                <div class="meta-item">Host: <strong id="host-name">localhost</strong></div>
+                <div style="width: 1px; height: 12px; background: var(--border-color); align-self: center;"></div>
+                <div class="meta-item">Uptime: <strong id="up-time">0:00</strong></div>
+            </div>
+        </div>
+
+        <div class="content-area">
+            <!-- View: Dashboard -->
+            <div id="view-dashboard" class="view-section active">
+                <!-- CPU Usage -->
+                <div class="card col-4">
+                    <div class="card-title">
+                        <span>CPU Load</span>
+                        <span class="badge badge-cyan" id="cpu-total-badge">0%</span>
+                    </div>
+                    <div class="gauge-container">
+                        <svg class="gauge-svg" width="160" height="160">
+                            <circle class="gauge-bg" cx="80" cy="80" r="68"></circle>
+                            <circle class="gauge-fill" id="cpu-gauge" cx="80" cy="80" r="68" stroke-dasharray="427" stroke-dashoffset="427"></circle>
+                        </svg>
+                        <div class="gauge-val">
+                            <span class="gauge-num" id="cpu-load-val">0</span>
+                            <span class="gauge-unit">%</span>
+                        </div>
+                    </div>
+                    <div class="gauge-meta-list">
+                        <div class="gauge-meta-item">User: <strong id="cpu-user-val">0%</strong></div>
+                        <div class="gauge-meta-item">System: <strong id="cpu-sys-val">0%</strong></div>
+                    </div>
+                </div>
+
+                <!-- Memory Usage -->
+                <div class="card col-4">
+                    <div class="card-title">
+                        <span>Physical Memory</span>
+                        <span class="badge badge-purple" id="mem-total-badge">0%</span>
+                    </div>
+                    <div class="gauge-container">
+                        <svg class="gauge-svg gauge-svg-purple" width="160" height="160">
+                            <circle class="gauge-bg" cx="80" cy="80" r="68"></circle>
+                            <circle class="gauge-fill gauge-fill-purple" id="mem-gauge" cx="80" cy="80" r="68" stroke-dasharray="427" stroke-dashoffset="427"></circle>
+                        </svg>
+                        <div class="gauge-val">
+                            <span class="gauge-num" id="mem-usage-val">0</span>
+                            <span class="gauge-unit">%</span>
+                        </div>
+                    </div>
+                    <div class="gauge-meta-list">
+                        <div class="gauge-meta-item">Used: <strong id="mem-used-val">0 GB</strong></div>
+                        <div class="gauge-meta-item">Free: <strong id="mem-free-val">0 GB</strong></div>
+                    </div>
+                </div>
+
+                <!-- Disk Space -->
+                <div class="card col-4">
+                    <div class="card-title">Disk Storage</div>
+                    <div class="disk-details">
+                        <div class="disk-row">
+                            <span class="disk-label">Device Size</span>
+                            <span class="disk-value" id="disk-size">0 GB</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="disk-row" style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 8px;">
+                                <span>Used: <strong id="disk-used" style="color: var(--text-primary); font-family:var(--font-mono);">0 GB</strong></span>
+                                <span>Free: <strong id="disk-avail" style="color: var(--text-primary); font-family:var(--font-mono);">0 GB</strong></span>
+                            </div>
+                            <div class="progress-bar-bg">
+                                <div class="progress-bar-fill" id="disk-progress"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Process Telemetry Preview -->
+                <div class="card col-12" style="flex-grow: 1;">
+                    <div class="card-title">Top Active Processes</div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>PID</th>
+                                    <th>Process Name</th>
+                                    <th>% CPU</th>
+                                    <th>% MEM</th>
+                                </tr>
+                            </thead>
+                            <tbody id="proc-preview-rows">
+                                <tr>
+                                    <td colspan="4" style="text-align: center; color: var(--text-secondary); padding: 40px 0;">Loading process telemetry...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- View: Processes -->
+            <div id="view-processes" class="view-section">
+                <div class="card col-12" style="height: 100%;">
+                    <div class="card-title">
+                        <span>Telemetry Monitoring (sorted by %CPU)</span>
+                        <span class="badge badge-cyan" id="proc-count-badge">0 active</span>
+                    </div>
+                    <div class="table-container" style="max-height: 480px;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>PID</th>
+                                    <th>Process Name</th>
+                                    <th>% CPU</th>
+                                    <th>% MEM</th>
+                                </tr>
+                            </thead>
+                            <tbody id="proc-full-rows">
+                                <tr>
+                                    <td colspan="4" style="text-align: center; color: var(--text-secondary); padding: 40px 0;">Loading process list...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- View: Network -->
+            <div id="view-network" class="view-section">
+                <div class="card col-12">
+                    <div class="card-title">ICMP Diagnostics</div>
+                    <div class="ping-form">
+                        <input class="input-dark" type="text" id="ping-host" value="8.8.8.8" placeholder="Enter host address (e.g. google.com)">
+                        <button class="btn-cyan" id="ping-btn" onclick="runPing()">Run Ping</button>
+                    </div>
+                    <div class="console-output" id="ping-output">Console terminal initialized. Ready to execute ping diagnostics.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchView(viewName) {
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+
+            const titles = {
+                'dashboard': 'System Dashboard',
+                'processes': 'Process Telemetry',
+                'network': 'Network Diagnostics'
+            };
+            document.getElementById('view-title').innerText = titles[viewName];
+
+            document.querySelectorAll('.view-section').forEach(view => view.classList.remove('active'));
+            document.getElementById(`view-dashboard`).style.display = 'none';
+            document.getElementById(`view-processes`).style.display = 'none';
+            document.getElementById(`view-network`).style.display = 'none';
+            
+            const activeView = document.getElementById(`view-${viewName}`);
+            activeView.style.display = 'grid';
+            activeView.classList.add('active');
+        }
+
+        function updateGauge(id, percent) {
+            const circle = document.getElementById(id);
+            if (!circle) return;
+            const radius = circle.r.baseVal.value;
+            const circumference = radius * 2 * Math.PI;
+            circle.style.strokeDasharray = `${circumference} ${circumference}`;
+            const offset = circumference - (percent / 100) * circumference;
+            circle.style.strokeDashoffset = offset;
+        }
+
+        async function updateStats() {
+            try {
+                const stats = await window.getSysInfo();
+                
+                // Uptime / Hostname
+                document.getElementById('host-name').innerText = stats.hostname;
+                document.getElementById('up-time').innerText = stats.uptime.split(',')[0].replace(/.*up\s+/, '').trim();
+
+                // CPU
+                const cpuUsed = (stats.cpu_user + stats.cpu_sys).toFixed(1);
+                document.getElementById('cpu-load-val').innerText = cpuUsed;
+                document.getElementById('cpu-total-badge').innerText = `${cpuUsed}%`;
+                updateGauge('cpu-gauge', cpuUsed);
+                document.getElementById('cpu-user-val').innerText = `${stats.cpu_user.toFixed(1)}%`;
+                document.getElementById('cpu-sys-val').innerText = `${stats.cpu_sys.toFixed(1)}%`;
+
+                // Memory
+                const memTotal = stats.mem_used + stats.mem_unused;
+                const memPercent = memTotal > 0 ? ((stats.mem_used / memTotal) * 100).toFixed(0) : 0;
+                document.getElementById('mem-usage-val').innerText = memPercent;
+                document.getElementById('mem-total-badge').innerText = `${memPercent}%`;
+                updateGauge('mem-gauge', memPercent);
+                document.getElementById('mem-used-val').innerText = `${(stats.mem_used / 1024).toFixed(1)} GB`;
+                document.getElementById('mem-free-val').innerText = `${(stats.mem_unused / 1024).toFixed(1)} GB`;
+
+                // Disk
+                document.getElementById('disk-size').innerText = stats.disk_size;
+                document.getElementById('disk-used').innerText = stats.disk_used;
+                document.getElementById('disk-avail').innerText = stats.disk_avail;
+                const diskCapPercent = parseFloat(stats.disk_cap.replace('%', ''));
+                document.getElementById('disk-progress').style.width = `${diskCapPercent}%`;
+
+                // Processes
+                const procs = await window.getProcesses();
+                
+                // Dashboard Preview (top 5)
+                const procPreviewBody = document.getElementById('proc-preview-rows');
+                procPreviewBody.innerHTML = procs.slice(0, 5).map(p => `
+                    <tr>
+                        <td style="font-family:var(--font-mono); color:var(--text-secondary);">${p.pid}</td>
+                        <td><div class="proc-name">${escapeHtml(p.comm)}</div></td>
+                        <td><span class="badge ${p.cpu > 25 ? 'badge-purple' : 'badge-cyan'}">${p.cpu.toFixed(1)}%</span></td>
+                        <td style="font-family:var(--font-mono);">${p.mem.toFixed(1)}%</td>
+                    </tr>
+                `).join('');
+
+                // Full Process View
+                document.getElementById('proc-count-badge').innerText = `${procs.length} active`;
+                const procFullBody = document.getElementById('proc-full-rows');
+                procFullBody.innerHTML = procs.map(p => `
+                    <tr>
+                        <td style="font-family:var(--font-mono); color:var(--text-secondary);">${p.pid}</td>
+                        <td><div class="proc-name">${escapeHtml(p.comm)}</div></td>
+                        <td><span class="badge ${p.cpu > 25 ? 'badge-purple' : 'badge-cyan'}">${p.cpu.toFixed(1)}%</span></td>
+                        <td style="font-family:var(--font-mono);">${p.mem.toFixed(1)}%</td>
+                    </tr>
+                `).join('');
+
+            } catch (err) {
+                console.error("Error updating system stats: ", err);
+            }
+        }
+
+        async function runPing() {
+            const host = document.getElementById('ping-host').value.trim();
+            const btn = document.getElementById('ping-btn');
+            const output = document.getElementById('ping-output');
+            
+            if (!host) {
+                output.innerText = "Error: Please enter a valid host.";
+                return;
+            }
+
+            btn.disabled = true;
+            btn.style.opacity = '0.7';
+            btn.innerText = "Pinging...";
+            output.innerText = `PING ${host} initialized. Waiting for response...\n`;
+            
+            try {
+                const res = await window.pingHost(host);
+                output.innerText = res;
+            } catch (e) {
+                output.innerText = "Error calling V backend ping:\n" + e;
+            } finally {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                btn.innerText = "Run Ping";
+            }
+        }
+
+        function escapeHtml(text) {
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        updateStats();
+        setInterval(updateStats, 3000);
+    </script>
+</body>
+</html>

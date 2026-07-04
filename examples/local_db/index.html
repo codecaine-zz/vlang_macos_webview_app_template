@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local DB Manager</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #060709;
+            --sidebar-bg: rgba(10, 12, 18, 0.7);
+            --panel-bg: rgba(18, 22, 33, 0.45);
+            --border-color: rgba(255, 255, 255, 0.05);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-cyan: #00f2fe;
+            --accent-purple: #a855f7;
+            --accent-green: #10b981;
+            --accent-red: #f43f5e;
+            --accent-blue: #3b82f6;
+            --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 0% 100%, rgba(168, 85, 247, 0.08) 0px, transparent 45%),
+                radial-gradient(at 100% 0%, rgba(59, 130, 246, 0.08) 0px, transparent 45%);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            user-select: none;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 260px;
+            background: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            backdrop-filter: blur(40px);
+            display: flex;
+            flex-direction: column;
+            padding: 28px 20px;
+            z-index: 10;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            letter-spacing: -0.5px;
+            margin-bottom: 32px;
+            padding-left: 8px;
+        }
+
+        .brand-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 16px rgba(168, 85, 247, 0.3);
+        }
+
+        .brand-text {
+            background: linear-gradient(135deg, #ffffff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex-grow: 1;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid transparent;
+        }
+
+        .nav-item svg {
+            width: 18px;
+            height: 18px;
+            stroke: currentColor;
+            stroke-width: 2;
+            fill: none;
+            transition: stroke 0.25s;
+        }
+
+        .nav-item:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.03);
+            border-color: rgba(255, 255, 255, 0.02);
+        }
+
+        .nav-item.active {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--border-color);
+            color: var(--text-primary);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-item.active svg {
+            stroke: var(--accent-purple);
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            border-top: 1px solid var(--border-color);
+            padding-top: 20px;
+        }
+
+        .quit-btn {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(244, 63, 94, 0.15);
+            background: rgba(244, 63, 94, 0.06);
+            color: var(--accent-red);
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .quit-btn:hover {
+            background: rgba(244, 63, 94, 0.12);
+            border-color: rgba(244, 63, 94, 0.35);
+        }
+
+        /* Main Workspace Layout */
+        .workspace {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .header {
+            height: 80px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 40px;
+            background: rgba(6, 7, 9, 0.4);
+            backdrop-filter: blur(15px);
+        }
+
+        .header-title h1 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #ffffff, #cbd5e1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .db-badge {
+            font-size: 0.75rem;
+            font-family: var(--font-mono);
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            padding: 6px 14px;
+            border-radius: 20px;
+            color: var(--text-secondary);
+        }
+
+        .content-area {
+            flex-grow: 1;
+            padding: 40px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .view-section {
+            display: none;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 28px;
+            width: 100%;
+            animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .view-section.active {
+            display: grid;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .col-4 { grid-column: span 4; }
+        .col-8 { grid-column: span 8; }
+        .col-12 { grid-column: span 12; }
+
+        /* Premium Dashboard Card */
+        .card {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 28px;
+            backdrop-filter: blur(30px);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 
+                0 4px 30px rgba(0, 0, 0, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .card:hover {
+            border-color: rgba(255, 255, 255, 0.08);
+            box-shadow: 
+                0 10px 40px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+
+        .card-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Forms styling */
+        .form-row {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .form-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .input-dark {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 11px 14px;
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            font-size: 0.85rem;
+            outline: none;
+            transition: all 0.25s;
+        }
+
+        .input-dark:focus {
+            border-color: var(--accent-purple);
+            box-shadow: 0 0 10px rgba(168, 85, 247, 0.15);
+        }
+
+        .button-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .btn-action {
+            flex-grow: 1;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+            color: #ffffff;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 20px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.25s;
+            box-shadow: 0 4px 15px rgba(168, 85, 247, 0.2);
+            text-align: center;
+        }
+
+        .btn-action:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(168, 85, 247, 0.35);
+        }
+
+        .btn-cancel {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-secondary);
+            padding: 12px 20px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-cancel:hover {
+            background: rgba(255,255,255,0.08);
+            color: var(--text-primary);
+        }
+
+        /* Database Tables */
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        th {
+            text-align: left;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+            color: var(--text-primary);
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.01);
+        }
+
+        .actions-cell {
+            display: flex;
+            gap: 12px;
+        }
+
+        .table-btn {
+            background: transparent;
+            border: none;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .table-btn.edit {
+            color: var(--accent-blue);
+        }
+
+        .table-btn.edit:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .table-btn.delete {
+            color: var(--accent-red);
+        }
+
+        .table-btn.delete:hover {
+            background: rgba(244, 63, 94, 0.1);
+        }
+
+        /* Scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.16);
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <div class="sidebar">
+        <div class="brand">
+            <div class="brand-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#040810" stroke-width="3"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <span class="brand-text">Local DB</span>
+        </div>
+        <div class="nav-menu">
+            <div class="nav-item active" onclick="switchView('sqlite')">
+                <svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg>
+                <span>SQLite DB (Users)</span>
+            </div>
+            <div class="nav-item" onclick="switchView('json')">
+                <svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                <span>JSON Store (Inventory)</span>
+            </div>
+        </div>
+        <div class="sidebar-footer">
+            <button class="quit-btn" onclick="window.quitApp()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+                <span>Quit App</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Workspace -->
+    <div class="workspace">
+        <div class="header">
+            <div class="header-title">
+                <h1 id="view-header-title">SQLite Database Manager</h1>
+            </div>
+            <div class="db-badge" id="view-db-badge">users.db</div>
+        </div>
+
+        <div class="content-area">
+            <!-- View: SQLite Users CRUD -->
+            <div id="view-sqlite" class="view-section active">
+                <!-- User Input Card -->
+                <div class="card col-4">
+                    <div class="card-title" id="sqlite-form-title">Add User Record</div>
+                    <div class="form-row">
+                        <input type="hidden" id="sqlite-user-id" value="">
+                        <div class="form-field">
+                            <label class="form-label">Full Name</label>
+                            <input class="input-dark" type="text" id="sqlite-name" placeholder="John Doe">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">Email Address</label>
+                            <input class="input-dark" type="email" id="sqlite-email" placeholder="john@example.com">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">Age</label>
+                            <input class="input-dark" type="number" id="sqlite-age" value="25">
+                        </div>
+                        <div class="button-row">
+                            <button class="btn-cancel" id="sqlite-btn-cancel" onclick="resetSqliteForm()" style="display:none;">Cancel</button>
+                            <button class="btn-action" id="sqlite-btn-submit" onclick="submitSqliteForm()">Save User</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Grid List -->
+                <div class="card col-8">
+                    <div class="card-title">Database Records (Table: users)</div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;">ID</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th style="width: 80px;">Age</th>
+                                    <th style="width: 140px; text-align: center;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sqlite-tbody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- View: JSON Product CRUD -->
+            <div id="view-json" class="view-section">
+                <!-- Product Input Card -->
+                <div class="card col-4">
+                    <div class="card-title" id="json-form-title">Add Product Record</div>
+                    <div class="form-row">
+                        <input type="hidden" id="json-product-id" value="">
+                        <div class="form-field">
+                            <label class="form-label">Product Name</label>
+                            <input class="input-dark" type="text" id="json-name" placeholder="Wireless Mouse">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">Price (USD)</label>
+                            <input class="input-dark" type="number" step="0.01" id="json-price" value="29.99">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">Stock Quantity</label>
+                            <input class="input-dark" type="number" id="json-stock" value="100">
+                        </div>
+                        <div class="button-row">
+                            <button class="btn-cancel" id="json-btn-cancel" onclick="resetJsonForm()" style="display:none;">Cancel</button>
+                            <button class="btn-action" id="json-btn-submit" onclick="submitJsonForm()">Save Product</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product Grid List -->
+                <div class="card col-8">
+                    <div class="card-title">JSON Document Array (File: products.json)</div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;">ID</th>
+                                    <th>Product Name</th>
+                                    <th>Price</th>
+                                    <th style="width: 100px;">Stock</th>
+                                    <th style="width: 140px; text-align: center;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="json-tbody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Confirm Modal -->
+    <div class="modal-overlay" id="confirm-modal" style="display:none; z-index:200; position: fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.6); backdrop-filter:blur(5px); align-items:center; justify-content:center;">
+        <div class="modal" style="background:#0d1117; border:1px solid var(--border-color); border-radius:20px; width:400px; padding:32px; box-shadow:0 10px 40px rgba(0,0,0,0.5); display:flex; flex-direction:column; gap:20px; border-color: rgba(239, 68, 68, 0.15);">
+            <span class="modal-title" style="color: var(--accent-red); display:flex; align-items:center; gap:8px; font-weight:700; font-size:1.1rem;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                Confirm Action
+            </span>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6;" id="confirm-message">Are you sure you want to proceed?</p>
+            <div class="modal-buttons" style="display:flex; justify-content:flex-end; gap:12px; margin-top:10px;">
+                <button class="btn-cancel" onclick="closeConfirmModal()">Cancel</button>
+                <button class="btn-action" style="background:linear-gradient(135deg, var(--accent-red), #fda4af); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25); flex-grow:0;" id="confirm-yes-btn">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Alert Modal -->
+    <div class="modal-overlay" id="alert-modal" style="display:none; z-index:300; position: fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.6); backdrop-filter:blur(5px); align-items:center; justify-content:center;">
+        <div class="modal" style="background:#0d1117; border:1px solid var(--border-color); border-radius:20px; width:380px; padding:32px; box-shadow:0 10px 40px rgba(0,0,0,0.5); display:flex; flex-direction:column; gap:20px;">
+            <span class="modal-title" id="alert-title" style="font-weight:700; font-size:1.1rem;">Notification</span>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6;" id="alert-message"></p>
+            <div class="modal-buttons" style="display:flex; justify-content:flex-end; gap:12px; margin-top:10px;">
+                <button class="btn-action" onclick="closeAlertModal()" style="flex-grow:0; padding:10px 24px;">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchView(viewName) {
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+
+            document.querySelectorAll('.view-section').forEach(view => view.classList.remove('active'));
+            document.getElementById(`view-sqlite`).classList.remove('active');
+            document.getElementById(`view-json`).classList.remove('active');
+            
+            const activeView = document.getElementById(`view-${viewName}`);
+            activeView.classList.add('active');
+
+            if (viewName === 'sqlite') {
+                document.getElementById('view-header-title').innerText = 'SQLite Database Manager';
+                document.getElementById('view-db-badge').innerText = 'users.db';
+                loadSqliteUsers();
+            } else {
+                document.getElementById('view-header-title').innerText = 'JSON Document Store';
+                document.getElementById('view-db-badge').innerText = 'products.json';
+                loadJsonProducts();
+            }
+        }
+
+        // ==========================================
+        // SQLite Operations
+        // ==========================================
+        async function loadSqliteUsers() {
+            try {
+                const resJson = await window.sqliteGetUsers();
+                const users = JSON.parse(resJson);
+                renderSqliteTable(users);
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function renderSqliteTable(users) {
+            const tbody = document.getElementById('sqlite-tbody');
+            if (users.error) {
+                tbody.innerHTML = `<tr><td colspan="5" style="color:var(--accent-red); text-align:center;">${users.error}</td></tr>`;
+                return;
+            }
+            if (users.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-secondary); font-style:italic;">No records found. Write one on the left!</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = users.map(user => `
+                <tr>
+                    <td style="font-family:var(--font-mono);">${user.id}</td>
+                    <td><strong>${escapeHtml(user.name)}</strong></td>
+                    <td style="color:var(--text-secondary);">${escapeHtml(user.email)}</td>
+                    <td>${user.age}</td>
+                    <td class="actions-cell">
+                        <button class="table-btn edit" onclick="editSqliteUser(${user.id}, '${escapeHtml(user.name).replace(/'/g, "\\'")}', '${escapeHtml(user.email).replace(/'/g, "\\'")}', ${user.age})">Edit</button>
+                        <button class="table-btn delete" onclick="deleteSqliteUser(${user.id})">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function submitSqliteForm() {
+            const id = document.getElementById('sqlite-user-id').value;
+            const name = document.getElementById('sqlite-name').value.trim();
+            const email = document.getElementById('sqlite-email').value.trim();
+            const age = parseInt(document.getElementById('sqlite-age').value);
+
+            if (!name || !email) {
+                showAlert("Warning", "Please fill in both Name and Email.");
+                return;
+            }
+
+            try {
+                let resJson;
+                if (id) {
+                    resJson = await window.sqliteUpdateUser(id.toString(), name, email, age.toString());
+                } else {
+                    resJson = await window.sqliteAddUser(name, email, age.toString());
+                }
+
+                const res = JSON.parse(resJson);
+                if (res.error) {
+                    showAlert("Error", res.error);
+                } else {
+                    renderSqliteTable(res);
+                    resetSqliteForm();
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function editSqliteUser(id, name, email, age) {
+            document.getElementById('sqlite-user-id').value = id;
+            document.getElementById('sqlite-name').value = name;
+            document.getElementById('sqlite-email').value = email;
+            document.getElementById('sqlite-age').value = age;
+
+            document.getElementById('sqlite-form-title').innerText = `Edit User ID: ${id}`;
+            document.getElementById('sqlite-btn-submit').innerText = "Update User";
+            document.getElementById('sqlite-btn-cancel').style.display = "block";
+        }
+
+        function resetSqliteForm() {
+            document.getElementById('sqlite-user-id').value = '';
+            document.getElementById('sqlite-name').value = '';
+            document.getElementById('sqlite-email').value = '';
+            document.getElementById('sqlite-age').value = '25';
+
+            document.getElementById('sqlite-form-title').innerText = "Add User Record";
+            document.getElementById('sqlite-btn-submit').innerText = "Save User";
+            document.getElementById('sqlite-btn-cancel').style.display = "none";
+        }
+
+        async function deleteSqliteUser(id) {
+            showConfirm(`Are you sure you want to delete user ID #${id}?`, async () => {
+                try {
+                    const resJson = await window.sqliteDeleteUser(id.toString());
+                    const res = JSON.parse(resJson);
+                    if (res.error) {
+                        showAlert("Error", res.error);
+                    } else {
+                        renderSqliteTable(res);
+                        resetSqliteForm();
+                    }
+                } catch (e) {
+                    console.error(e);
+                }
+            });
+        }
+
+        // ==========================================
+        // JSON Operations
+        // ==========================================
+        async function loadJsonProducts() {
+            try {
+                const resJson = await window.jsonGetProducts();
+                const products = JSON.parse(resJson);
+                renderJsonTable(products);
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function renderJsonTable(products) {
+            const tbody = document.getElementById('json-tbody');
+            if (products.error) {
+                tbody.innerHTML = `<tr><td colspan="5" style="color:var(--accent-red); text-align:center;">${products.error}</td></tr>`;
+                return;
+            }
+            if (products.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-secondary); font-style:italic;">No product documents found. Create one on the left!</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = products.map(p => `
+                <tr>
+                    <td style="font-family:var(--font-mono);">${p.id}</td>
+                    <td><strong>${escapeHtml(p.name)}</strong></td>
+                    <td style="color:var(--accent-green); font-family:var(--font-mono);">$${p.price.toFixed(2)}</td>
+                    <td style="color:var(--text-secondary);">${p.stock} units</td>
+                    <td class="actions-cell">
+                        <button class="table-btn edit" onclick="editJsonProduct(${p.id}, '${escapeHtml(p.name).replace(/'/g, "\\'")}', ${p.price}, ${p.stock})">Edit</button>
+                        <button class="table-btn delete" onclick="deleteJsonProduct(${p.id})">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function submitJsonForm() {
+            const id = document.getElementById('json-product-id').value;
+            const name = document.getElementById('json-name').value.trim();
+            const price = parseFloat(document.getElementById('json-price').value);
+            const stock = parseInt(document.getElementById('json-stock').value);
+
+            if (!name || isNaN(price) || isNaN(stock)) {
+                showAlert("Warning", "Please fill in valid name, price and stock fields.");
+                return;
+            }
+
+            try {
+                let resJson;
+                if (id) {
+                    resJson = await window.jsonUpdateProduct(id.toString(), name, price.toString(), stock.toString());
+                } else {
+                    resJson = await window.jsonAddProduct(name, price.toString(), stock.toString());
+                }
+
+                const res = JSON.parse(resJson);
+                if (res.error) {
+                    showAlert("Error", res.error);
+                } else {
+                    renderJsonTable(res);
+                    resetJsonForm();
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function editJsonProduct(id, name, price, stock) {
+            document.getElementById('json-product-id').value = id;
+            document.getElementById('json-name').value = name;
+            document.getElementById('json-price').value = price;
+            document.getElementById('json-stock').value = stock;
+
+            document.getElementById('json-form-title').innerText = `Edit Product ID: ${id}`;
+            document.getElementById('json-btn-submit').innerText = "Update Product";
+            document.getElementById('json-btn-cancel').style.display = "block";
+        }
+
+        function resetJsonForm() {
+            document.getElementById('json-product-id').value = '';
+            document.getElementById('json-name').value = '';
+            document.getElementById('json-price').value = '29.99';
+            document.getElementById('json-stock').value = '100';
+
+            document.getElementById('json-form-title').innerText = "Add Product Record";
+            document.getElementById('json-btn-submit').innerText = "Save Product";
+            document.getElementById('json-btn-cancel').style.display = "none";
+        }
+
+        async function deleteJsonProduct(id) {
+            showConfirm(`Are you sure you want to delete product ID #${id}?`, async () => {
+                try {
+                    const resJson = await window.jsonDeleteProduct(id.toString());
+                    const res = JSON.parse(resJson);
+                    if (res.error) {
+                        showAlert("Error", res.error);
+                    } else {
+                        renderJsonTable(res);
+                        resetJsonForm();
+                    }
+                } catch (e) {
+                    console.error(e);
+                }
+            });
+        }
+
+        let confirmCallback = null;
+
+        function showConfirm(message, callback) {
+            document.getElementById('confirm-message').innerText = message;
+            confirmCallback = callback;
+            document.getElementById('confirm-modal').style.display = 'flex';
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirm-modal').style.display = 'none';
+            confirmCallback = null;
+        }
+
+        document.getElementById('confirm-yes-btn').addEventListener('click', () => {
+            if (confirmCallback) confirmCallback();
+            closeConfirmModal();
+        });
+
+        function showAlert(title, message) {
+            document.getElementById('alert-title').innerText = title;
+            document.getElementById('alert-message').innerText = message;
+            document.getElementById('alert-modal').style.display = 'flex';
+        }
+
+        function closeAlertModal() {
+            document.getElementById('alert-modal').style.display = 'none';
+        }
+
+        function escapeHtml(text) {
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // Load initially
+        loadSqliteUsers();
+    </script>
+</body>
+</html>
