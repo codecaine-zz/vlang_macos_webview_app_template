@@ -83,15 +83,6 @@ Once built, you can run the application bundle by:
 
 ---
 
-## 🧰 Additional Production-Ready Example Apps
-
-The workspace now includes two new standard-library-based utilities that are more suited to day-to-day operations than the earlier demos:
-
-- [examples/file_organizer](examples/file_organizer) for safely organizing files into category folders with dry-run support and collision-safe moves.
-- [examples/log_analyzer](examples/log_analyzer) for parsing structured log lines, counting severity levels, and summarizing sources from a log file.
-
-Both examples ship with tests and can be run directly with V from the repository root.
-
 ## 🎨 Premium Apple-Style Icon Templates
 
 This project includes **101 premium, futuristic Apple-style glassmorphism icons** located in the [resources/](file:///Users/codecaine/vlang_macos_webview_app_template/resources) directory.
