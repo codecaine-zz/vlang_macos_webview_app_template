@@ -297,5 +297,17 @@ fn main() {
 		exit(1)
 	}
 
+	println('🔐 Signing the app bundle for macOS...')
+	sign_res := os.execute('codesign --force --deep --sign - ${os.quoted_path(app_dir)}')
+	if sign_res.exit_code != 0 {
+		eprintln('❌ codesign failed: ${sign_res.output}')
+		exit(1)
+	}
+
+	clear_attr_res := os.execute('xattr -cr ${os.quoted_path(app_dir)}')
+	if clear_attr_res.exit_code != 0 {
+		eprintln('⚠️ Failed to clear quarantine attributes: ${clear_attr_res.output}')
+	}
+
 	println('\n🎉 Success! macOS app bundle built at: ${app_dir}')
 }

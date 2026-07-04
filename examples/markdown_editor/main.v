@@ -1,11 +1,13 @@
 import ttytm.webview { Event }
 import os
+import time
 
 struct FileItem {
 	name   string
 	path   string
 	is_dir bool
 	size   i64
+	mtime  string
 }
 
 fn quit_app(e &Event) string {
@@ -25,47 +27,59 @@ fn get_parent_directory(e &Event) string {
 
 fn list_directory(e &Event) []FileItem {
 	path := e.get_arg[string](0) or { os.home_dir() }
-	
+
 	mut raw_items := os.ls(path) or { return []FileItem{} }
-	
+
 	mut dirs := []FileItem{}
 	mut files := []FileItem{}
-	
+
 	for item in raw_items {
 		// Ignore hidden files/dirs starting with dot to keep view clean
 		if item.starts_with('.') && item != '.git' {
 			continue
 		}
-		
+
 		full_path := os.join_path(path, item)
 		is_dir := os.is_dir(full_path)
-		
+
 		mut size := i64(0)
+		mut mtime := ''
 		if !is_dir {
 			size = os.file_size(full_path)
+		} else {
+			mtime = 'folder'
 		}
-		
+		if !is_dir {
+			mod_ts := os.file_last_mod_unix(full_path)
+			if mod_ts > 0 {
+				mtime = time.unix(mod_ts).relative()
+			}
+		}
+
 		f_item := FileItem{
-			name: item
-			path: full_path
+			name:   item
+			path:   full_path
 			is_dir: is_dir
-			size: size
+			size:   size
+			mtime:  mtime
 		}
-		
+
 		if is_dir {
 			dirs << f_item
 		} else {
 			// Only show text/md files for editing in this markdown app
-			if item.ends_with('.md') || item.ends_with('.txt') || item.ends_with('.json') || item.ends_with('.html') || item.ends_with('.css') || item.ends_with('.js') || item.ends_with('.v') || item.ends_with('.vsh') {
+			if item.ends_with('.md') || item.ends_with('.txt') || item.ends_with('.json')
+				|| item.ends_with('.html') || item.ends_with('.css') || item.ends_with('.js')
+				|| item.ends_with('.v') || item.ends_with('.vsh') {
 				files << f_item
 			}
 		}
 	}
-	
+
 	// Sort lists alphabetically
 	dirs.sort(a.name.to_lower() < b.name.to_lower())
 	files.sort(a.name.to_lower() < b.name.to_lower())
-	
+
 	mut sorted := []FileItem{}
 	for d in dirs {
 		sorted << d
@@ -73,7 +87,7 @@ fn list_directory(e &Event) []FileItem {
 	for f in files {
 		sorted << f
 	}
-	
+
 	return sorted
 }
 

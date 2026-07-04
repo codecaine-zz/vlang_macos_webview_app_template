@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Local DB Manager</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
     <style>
         :root {
             --bg-color: #060709;
@@ -30,7 +33,7 @@
 
         body {
             background-color: var(--bg-color);
-            background-image: 
+            background-image:
                 radial-gradient(at 0% 100%, rgba(168, 85, 247, 0.08) 0px, transparent 45%),
                 radial-gradient(at 100% 0%, rgba(59, 130, 246, 0.08) 0px, transparent 45%);
             color: var(--text-primary);
@@ -217,13 +220,28 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(6px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        .col-4 { grid-column: span 4; }
-        .col-8 { grid-column: span 8; }
-        .col-12 { grid-column: span 12; }
+        .col-4 {
+            grid-column: span 4;
+        }
+
+        .col-8 {
+            grid-column: span 8;
+        }
+
+        .col-12 {
+            grid-column: span 12;
+        }
 
         /* Premium Dashboard Card */
         .card {
@@ -234,7 +252,7 @@
             backdrop-filter: blur(30px);
             display: flex;
             flex-direction: column;
-            box-shadow: 
+            box-shadow:
                 0 4px 30px rgba(0, 0, 0, 0.2),
                 inset 0 1px 0 rgba(255, 255, 255, 0.05);
             transition: border-color 0.3s, box-shadow 0.3s;
@@ -242,7 +260,7 @@
 
         .card:hover {
             border-color: rgba(255, 255, 255, 0.08);
-            box-shadow: 
+            box-shadow:
                 0 10px 40px rgba(0, 0, 0, 0.3),
                 inset 0 1px 0 rgba(255, 255, 255, 0.08);
         }
@@ -257,6 +275,23 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+        }
+
+        .metric-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .metric-pill {
+            padding: 7px 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            font-family: var(--font-mono);
         }
 
         /* Forms styling */
@@ -325,7 +360,7 @@
         }
 
         .btn-cancel {
-            background: rgba(255,255,255,0.03);
+            background: rgba(255, 255, 255, 0.03);
             border: 1px solid var(--border-color);
             border-radius: 10px;
             color: var(--text-secondary);
@@ -337,7 +372,7 @@
         }
 
         .btn-cancel:hover {
-            background: rgba(255,255,255,0.08);
+            background: rgba(255, 255, 255, 0.08);
             color: var(--text-primary);
         }
 
@@ -426,28 +461,40 @@
         }
     </style>
 </head>
+
 <body>
     <!-- Sidebar Navigation -->
     <div class="sidebar">
         <div class="brand">
             <div class="brand-icon">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#040810" stroke-width="3"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#040810" stroke-width="3">
+                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                </svg>
             </div>
             <span class="brand-text">Local DB</span>
         </div>
         <div class="nav-menu">
             <div class="nav-item active" onclick="switchView('sqlite')">
-                <svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg>
+                <svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor">
+                    <ellipse cx="12" cy="5" rx="9" ry="3" />
+                    <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
+                    <path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3" />
+                </svg>
                 <span>SQLite DB (Users)</span>
             </div>
             <div class="nav-item" onclick="switchView('json')">
-                <svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                <svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                </svg>
                 <span>JSON Store (Inventory)</span>
             </div>
         </div>
         <div class="sidebar-footer">
             <button class="quit-btn" onclick="window.quitApp()">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
+                </svg>
                 <span>Quit App</span>
             </button>
         </div>
@@ -483,8 +530,10 @@
                             <input class="input-dark" type="number" id="sqlite-age" value="25">
                         </div>
                         <div class="button-row">
-                            <button class="btn-cancel" id="sqlite-btn-cancel" onclick="resetSqliteForm()" style="display:none;">Cancel</button>
-                            <button class="btn-action" id="sqlite-btn-submit" onclick="submitSqliteForm()">Save User</button>
+                            <button class="btn-cancel" id="sqlite-btn-cancel" onclick="resetSqliteForm()"
+                                style="display:none;">Cancel</button>
+                            <button class="btn-action" id="sqlite-btn-submit" onclick="submitSqliteForm()">Save
+                                User</button>
                         </div>
                     </div>
                 </div>
@@ -492,6 +541,7 @@
                 <!-- User Grid List -->
                 <div class="card col-8">
                     <div class="card-title">Database Records (Table: users)</div>
+                    <div class="metric-row" id="sqlite-metrics"></div>
                     <div class="table-container">
                         <table>
                             <thead>
@@ -531,8 +581,10 @@
                             <input class="input-dark" type="number" id="json-stock" value="100">
                         </div>
                         <div class="button-row">
-                            <button class="btn-cancel" id="json-btn-cancel" onclick="resetJsonForm()" style="display:none;">Cancel</button>
-                            <button class="btn-action" id="json-btn-submit" onclick="submitJsonForm()">Save Product</button>
+                            <button class="btn-cancel" id="json-btn-cancel" onclick="resetJsonForm()"
+                                style="display:none;">Cancel</button>
+                            <button class="btn-action" id="json-btn-submit" onclick="submitJsonForm()">Save
+                                Product</button>
                         </div>
                     </div>
                 </div>
@@ -540,6 +592,7 @@
                 <!-- Product Grid List -->
                 <div class="card col-8">
                     <div class="card-title">JSON Document Array (File: products.json)</div>
+                    <div class="metric-row" id="json-metrics"></div>
                     <div class="table-container">
                         <table>
                             <thead>
@@ -562,27 +615,41 @@
     </div>
 
     <!-- Custom Confirm Modal -->
-    <div class="modal-overlay" id="confirm-modal" style="display:none; z-index:200; position: fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.6); backdrop-filter:blur(5px); align-items:center; justify-content:center;">
-        <div class="modal" style="background:#0d1117; border:1px solid var(--border-color); border-radius:20px; width:400px; padding:32px; box-shadow:0 10px 40px rgba(0,0,0,0.5); display:flex; flex-direction:column; gap:20px; border-color: rgba(239, 68, 68, 0.15);">
-            <span class="modal-title" style="color: var(--accent-red); display:flex; align-items:center; gap:8px; font-weight:700; font-size:1.1rem;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    <div class="modal-overlay" id="confirm-modal"
+        style="display:none; z-index:200; position: fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.6); backdrop-filter:blur(5px); align-items:center; justify-content:center;">
+        <div class="modal"
+            style="background:#0d1117; border:1px solid var(--border-color); border-radius:20px; width:400px; padding:32px; box-shadow:0 10px 40px rgba(0,0,0,0.5); display:flex; flex-direction:column; gap:20px; border-color: rgba(239, 68, 68, 0.15);">
+            <span class="modal-title"
+                style="color: var(--accent-red); display:flex; align-items:center; gap:8px; font-weight:700; font-size:1.1rem;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path
+                        d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                    <line x1="12" y1="9" x2="12" y2="13" />
+                    <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
                 Confirm Action
             </span>
-            <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6;" id="confirm-message">Are you sure you want to proceed?</p>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6;" id="confirm-message">Are you
+                sure you want to proceed?</p>
             <div class="modal-buttons" style="display:flex; justify-content:flex-end; gap:12px; margin-top:10px;">
                 <button class="btn-cancel" onclick="closeConfirmModal()">Cancel</button>
-                <button class="btn-action" style="background:linear-gradient(135deg, var(--accent-red), #fda4af); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25); flex-grow:0;" id="confirm-yes-btn">Delete</button>
+                <button class="btn-action"
+                    style="background:linear-gradient(135deg, var(--accent-red), #fda4af); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25); flex-grow:0;"
+                    id="confirm-yes-btn">Delete</button>
             </div>
         </div>
     </div>
 
     <!-- Custom Alert Modal -->
-    <div class="modal-overlay" id="alert-modal" style="display:none; z-index:300; position: fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.6); backdrop-filter:blur(5px); align-items:center; justify-content:center;">
-        <div class="modal" style="background:#0d1117; border:1px solid var(--border-color); border-radius:20px; width:380px; padding:32px; box-shadow:0 10px 40px rgba(0,0,0,0.5); display:flex; flex-direction:column; gap:20px;">
+    <div class="modal-overlay" id="alert-modal"
+        style="display:none; z-index:300; position: fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.6); backdrop-filter:blur(5px); align-items:center; justify-content:center;">
+        <div class="modal"
+            style="background:#0d1117; border:1px solid var(--border-color); border-radius:20px; width:380px; padding:32px; box-shadow:0 10px 40px rgba(0,0,0,0.5); display:flex; flex-direction:column; gap:20px;">
             <span class="modal-title" id="alert-title" style="font-weight:700; font-size:1.1rem;">Notification</span>
             <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6;" id="alert-message"></p>
             <div class="modal-buttons" style="display:flex; justify-content:flex-end; gap:12px; margin-top:10px;">
-                <button class="btn-action" onclick="closeAlertModal()" style="flex-grow:0; padding:10px 24px;">OK</button>
+                <button class="btn-action" onclick="closeAlertModal()"
+                    style="flex-grow:0; padding:10px 24px;">OK</button>
             </div>
         </div>
     </div>
@@ -595,7 +662,7 @@
             document.querySelectorAll('.view-section').forEach(view => view.classList.remove('active'));
             document.getElementById(`view-sqlite`).classList.remove('active');
             document.getElementById(`view-json`).classList.remove('active');
-            
+
             const activeView = document.getElementById(`view-${viewName}`);
             activeView.classList.add('active');
 
@@ -618,9 +685,22 @@
                 const resJson = await window.sqliteGetUsers();
                 const users = JSON.parse(resJson);
                 renderSqliteTable(users);
+                updateMetrics('sqlite', users);
             } catch (e) {
                 console.error(e);
             }
+        }
+
+        function updateMetrics(kind, items) {
+            const container = document.getElementById(kind === 'sqlite' ? 'sqlite-metrics' : 'json-metrics');
+            if (!Array.isArray(items) || items.length === 0) {
+                container.innerHTML = '<span class="metric-pill">No rows yet</span>';
+                return;
+            }
+            const count = items.length;
+            const total = kind === 'json' ? items.reduce((sum, item) => sum + Number(item.stock || 0), 0) : count;
+            const value = kind === 'json' ? `$${items.reduce((sum, item) => sum + Number(item.price || 0), 0).toFixed(2)}` : `${count} records`;
+            container.innerHTML = `<span class="metric-pill">Entries: ${count}</span><span class="metric-pill">${kind === 'json' ? `Units: ${total}` : `Ready`}</span><span class="metric-pill">Value: ${value}</span>`;
         }
 
         function renderSqliteTable(users) {
@@ -672,6 +752,7 @@
                     showAlert("Error", res.error);
                 } else {
                     renderSqliteTable(res);
+                    updateMetrics('sqlite', res);
                     resetSqliteForm();
                 }
             } catch (e) {
@@ -710,6 +791,7 @@
                         showAlert("Error", res.error);
                     } else {
                         renderSqliteTable(res);
+                        updateMetrics('sqlite', res);
                         resetSqliteForm();
                     }
                 } catch (e) {
@@ -726,6 +808,7 @@
                 const resJson = await window.jsonGetProducts();
                 const products = JSON.parse(resJson);
                 renderJsonTable(products);
+                updateMetrics('json', products);
             } catch (e) {
                 console.error(e);
             }
@@ -780,6 +863,7 @@
                     showAlert("Error", res.error);
                 } else {
                     renderJsonTable(res);
+                    updateMetrics('json', res);
                     resetJsonForm();
                 }
             } catch (e) {
@@ -818,6 +902,7 @@
                         showAlert("Error", res.error);
                     } else {
                         renderJsonTable(res);
+                        updateMetrics('json', res);
                         resetJsonForm();
                     }
                 } catch (e) {
@@ -867,4 +952,5 @@
         loadSqliteUsers();
     </script>
 </body>
+
 </html>

@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>API Client Playground</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
     <style>
         :root {
             --bg-color: #060709;
@@ -31,7 +34,7 @@
 
         body {
             background-color: var(--bg-color);
-            background-image: 
+            background-image:
                 radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.08) 0px, transparent 45%),
                 radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.08) 0px, transparent 45%);
             color: var(--text-primary);
@@ -133,10 +136,21 @@
             letter-spacing: 0.5px;
         }
 
-        .method-get { color: var(--accent-green); }
-        .method-post { color: var(--accent-cyan); }
-        .method-put { color: var(--accent-yellow); }
-        .method-delete { color: var(--accent-red); }
+        .method-get {
+            color: var(--accent-green);
+        }
+
+        .method-post {
+            color: var(--accent-cyan);
+        }
+
+        .method-put {
+            color: var(--accent-yellow);
+        }
+
+        .method-delete {
+            color: var(--accent-red);
+        }
 
         .history-status {
             font-size: 0.75rem;
@@ -228,7 +242,7 @@
             backdrop-filter: blur(30px);
             display: flex;
             flex-direction: column;
-            box-shadow: 
+            box-shadow:
                 0 4px 30px rgba(0, 0, 0, 0.2),
                 inset 0 1px 0 rgba(255, 255, 255, 0.05);
             position: relative;
@@ -377,6 +391,23 @@
             align-items: center;
         }
 
+        .insight-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .insight-pill {
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--text-secondary);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
         .meta-pill {
             padding: 4px 10px;
             border-radius: 6px;
@@ -428,7 +459,7 @@
             padding: 20px;
             overflow: auto;
             position: relative;
-            box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
         }
 
         .code-block {
@@ -464,8 +495,13 @@
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         /* Scrollbar */
@@ -488,21 +524,28 @@
         }
     </style>
 </head>
+
 <body>
     <!-- Sidebar History -->
     <div class="sidebar">
         <div class="brand">
             <div class="brand-icon">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#040810" stroke-width="3"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#040810" stroke-width="3">
+                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                </svg>
             </div>
             <span class="brand-text">V-Rest Client</span>
         </div>
         <div class="section-header">Request History</div>
         <div class="history-list" id="history-container">
-            <div style="text-align: center; color: var(--text-secondary); font-size: 0.8rem; margin-top: 24px; font-style: italic;">No requests yet.</div>
+            <div
+                style="text-align: center; color: var(--text-secondary); font-size: 0.8rem; margin-top: 24px; font-style: italic;">
+                No requests yet.</div>
         </div>
         <button class="quit-btn" onclick="window.quitApp()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
+            </svg>
             <span>Quit App</span>
         </button>
     </div>
@@ -528,7 +571,8 @@
                             <option value="DELETE">DELETE</option>
                             <option value="PATCH">PATCH</option>
                         </select>
-                        <input class="input-url" type="text" id="req-url" value="https://httpbin.org/get" placeholder="Enter endpoint URL...">
+                        <input class="input-url" type="text" id="req-url" value="https://httpbin.org/get"
+                            placeholder="Enter endpoint URL...">
                         <button class="btn-send" onclick="sendReq()">Send</button>
                     </div>
                 </div>
@@ -538,13 +582,15 @@
                         <button class="tab-btn active" onclick="switchReqTab('headers')">Headers</button>
                         <button class="tab-btn" onclick="switchReqTab('body')">JSON Body</button>
                     </div>
-                    
+
                     <div id="req-tab-headers" style="flex-grow: 1; height: calc(100% - 40px); display: flex;">
-                        <textarea class="textarea-editor" id="req-headers" placeholder="Content-Type: application/json&#10;Authorization: Bearer my-token-value&#10;X-Custom-Header: custom_value_here"></textarea>
+                        <textarea class="textarea-editor" id="req-headers"
+                            placeholder="Content-Type: application/json&#10;Authorization: Bearer my-token-value&#10;X-Custom-Header: custom_value_here"></textarea>
                     </div>
 
                     <div id="req-tab-body" style="flex-grow: 1; height: calc(100% - 40px); display: none;">
-                        <textarea class="textarea-editor" id="req-body" placeholder="{&#10;  &quot;key&quot;: &quot;value&quot;&#10;}"></textarea>
+                        <textarea class="textarea-editor" id="req-body"
+                            placeholder="{&#10;  &quot;key&quot;: &quot;value&quot;&#10;}"></textarea>
                     </div>
                 </div>
             </div>
@@ -562,20 +608,28 @@
                             <span class="meta-pill" id="resp-status">200 OK</span>
                             <span class="meta-pill pill-time" id="resp-time">0 ms</span>
                         </div>
+                        <div class="insight-row" id="resp-insights" style="display: none;">
+                            <span class="insight-pill" id="resp-size">0 B</span>
+                            <span class="insight-pill" id="resp-verb">GET</span>
+                            <span class="insight-pill" id="resp-host">-</span>
+                        </div>
                     </div>
 
                     <div class="response-viewer">
                         <div class="tabs">
-                            <button class="tab-btn tab-btn-purple active" onclick="switchRespTab('body')">Response Body</button>
+                            <button class="tab-btn tab-btn-purple active" onclick="switchRespTab('body')">Response
+                                Body</button>
                             <button class="tab-btn tab-btn-purple" onclick="switchRespTab('headers')">Headers</button>
                         </div>
 
                         <div id="resp-tab-body" class="pre-container">
-                            <pre class="code-block"><code id="resp-body" style="color:var(--text-secondary); font-style:italic;">No response received yet. Select a method, enter a URL, and click Send.</code></pre>
+                            <pre
+                                class="code-block"><code id="resp-body" style="color:var(--text-secondary); font-style:italic;">No response received yet. Select a method, enter a URL, and click Send.</code></pre>
                         </div>
 
                         <div id="resp-tab-headers" class="pre-container" style="display: none;">
-                            <pre class="code-block"><code id="resp-headers" style="color:var(--text-secondary); font-style:italic;">Response headers will be displayed here.</code></pre>
+                            <pre
+                                class="code-block"><code id="resp-headers" style="color:var(--text-secondary); font-style:italic;">Response headers will be displayed here.</code></pre>
                         </div>
                     </div>
                 </div>
@@ -589,7 +643,7 @@
         function switchReqTab(tabName) {
             document.querySelectorAll('#req-tab-headers, #req-tab-body').forEach(el => el.style.display = 'none');
             document.querySelectorAll('.pane:first-child .tab-btn').forEach(btn => btn.classList.remove('active'));
-            
+
             document.getElementById(`req-tab-${tabName}`).style.display = 'flex';
             event.currentTarget.classList.add('active');
         }
@@ -597,7 +651,7 @@
         function switchRespTab(tabName) {
             document.querySelectorAll('#resp-tab-body, #resp-tab-headers').forEach(el => el.style.display = 'none');
             document.querySelectorAll('.pane:last-child .tab-btn').forEach(btn => btn.classList.remove('active'));
-            
+
             document.getElementById(`resp-tab-${tabName}`).style.display = 'block';
             event.currentTarget.classList.add('active');
         }
@@ -609,7 +663,7 @@
             const body = document.getElementById('req-body').value;
             const loader = document.getElementById('loader');
             const meta = document.getElementById('resp-meta-container');
-
+            const insights = document.getElementById('resp-insights');
             if (!url) {
                 alert("Please enter a valid URL.");
                 return;
@@ -619,10 +673,10 @@
 
             try {
                 const res = await window.sendRequest(url, method, headers, body);
-                
+
                 const statusPill = document.getElementById('resp-status');
                 statusPill.innerText = `${res.status_code} ${res.status_msg}`;
-                
+
                 statusPill.className = "meta-pill";
                 if (res.status_code >= 200 && res.status_code < 300) {
                     statusPill.classList.add('pill-status-success');
@@ -633,7 +687,11 @@
                 }
 
                 document.getElementById('resp-time').innerText = `${res.time_ms} ms`;
+                document.getElementById('resp-size').innerText = `${new TextEncoder().encode(res.body || '').length} B`;
+                document.getElementById('resp-verb').innerText = method.toUpperCase();
+                document.getElementById('resp-host').innerText = new URL(url).hostname;
                 meta.style.display = 'flex';
+                insights.style.display = 'flex';
 
                 const bodyContainer = document.getElementById('resp-body');
                 try {
@@ -651,6 +709,7 @@
                 document.getElementById('resp-body').innerText = "V Backend Request Failed:\n" + err;
                 document.getElementById('resp-headers').innerText = "";
                 meta.style.display = 'none';
+                insights.style.display = 'none';
             } finally {
                 loader.style.display = 'none';
             }
@@ -673,7 +732,7 @@
 
             container.innerHTML = requestHistory.map((item, index) => {
                 const methodClass = `method-${item.method.toLowerCase()}`;
-                
+
                 let statusClass = 'pill-status-warning';
                 if (item.status >= 200 && item.status < 300) statusClass = 'pill-status-success';
                 else if (item.status >= 400) statusClass = 'pill-status-error';
@@ -706,4 +765,5 @@
         }
     </script>
 </body>
+
 </html>

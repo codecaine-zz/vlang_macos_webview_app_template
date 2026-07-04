@@ -17,6 +17,7 @@ This template features zero JavaScript runtime dependencies (like Bun or Node) f
 ### Prerequisites
 
 Make sure you have:
+
 1. The **V compiler** installed and added to your `PATH`.
 2. The `ttytm.webview` library installed:
    ```bash
@@ -38,6 +39,7 @@ v run main.v
 To build and bundle the project into a native macOS app bundle, use the pure V builder script `build.vsh`.
 
 ### 1. Default Build
+
 To compile `main.v` with release optimization (`-prod`) and bundle it as a macOS application using the default app name and the default wave app icon:
 
 ```bash
@@ -45,11 +47,13 @@ v run build.vsh
 ```
 
 This compiles your V code and creates:
+
 ```
 dist/Vlang Macos Webview App Template.app
 ```
 
 ### 2. Custom App Packaging
+
 You can build the app with a custom name, a custom icon from the template suite, and a custom bundle ID:
 
 ```bash
@@ -57,6 +61,7 @@ v run build.vsh [entry_file.v] --name "My custom App" --icon resources/developer
 ```
 
 #### CLI Options:
+
 - `-i, --icon <path>`: Path to a PNG icon. Defaults to `resources/icon.png` or `icon.png`.
 - `-n, --name <name>`: Custom display name for the `.app` bundle.
 - `-d, --identifier <id>`: CFBundleIdentifier (e.g., `com.example.myapp`).
@@ -69,6 +74,7 @@ v run build.vsh [entry_file.v] --name "My custom App" --icon resources/developer
 ## Running the Built macOS App
 
 Once built, you can run the application bundle by:
+
 1. Double-clicking the `.app` bundle in Finder (located in the `dist/` directory).
 2. Running it from your terminal:
    ```bash
@@ -76,6 +82,15 @@ Once built, you can run the application bundle by:
    ```
 
 ---
+
+## 🧰 Additional Production-Ready Example Apps
+
+The workspace now includes two new standard-library-based utilities that are more suited to day-to-day operations than the earlier demos:
+
+- [examples/file_organizer](examples/file_organizer) for safely organizing files into category folders with dry-run support and collision-safe moves.
+- [examples/log_analyzer](examples/log_analyzer) for parsing structured log lines, counting severity levels, and summarizing sources from a log file.
+
+Both examples ship with tests and can be run directly with V from the repository root.
 
 ## 🎨 Premium Apple-Style Icon Templates
 

@@ -605,6 +605,51 @@
                     <div class="card-title">Is Alphanumeric Palindrome?</div>
                     <div class="result-box" id="str-palindrome">-</div>
                 </div>
+
+                <div class="card col-12">
+                    <div class="card-title">Text Intelligence & Timestamp Lens</div>
+                    <div style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px;">
+                        <div class="formula-item">
+                            <label class="stats-label">Compare two text values</label>
+                            <input class="input-dark" type="text" id="insight-a" value="hello world"
+                                oninput="runTextInsights()">
+                            <input class="input-dark" type="text" id="insight-b" value="hello there"
+                                oninput="runTextInsights()" style="margin-top: 10px;">
+                            <button class="btn-action" onclick="runTextInsights()" style="margin-top: 12px;">Measure
+                                Similarity</button>
+                            <div class="stats-grid">
+                                <div class="stats-item"><span class="stats-label">Distance</span><span class="stats-val"
+                                        id="insight-distance">0</span></div>
+                                <div class="stats-item"><span class="stats-label">Similarity</span><span
+                                        class="stats-val" id="insight-similarity">0.000</span></div>
+                                <div class="stats-item"><span class="stats-label">Length A</span><span class="stats-val"
+                                        id="insight-length-a">0</span></div>
+                                <div class="stats-item"><span class="stats-label">Length B</span><span class="stats-val"
+                                        id="insight-length-b">0</span></div>
+                            </div>
+                            <div class="result-box" id="insight-preview" style="margin-top: 12px;">-</div>
+                        </div>
+
+                        <div class="formula-item">
+                            <label class="stats-label">ISO timestamp</label>
+                            <input class="input-dark" type="text" id="timestamp-input" value="2026-07-04T12:30:45Z"
+                                oninput="runTimestampAnalysis()">
+                            <button class="btn-action btn-purple" onclick="runTimestampAnalysis()"
+                                style="margin-top: 12px;">Decode Timestamp</button>
+                            <div class="stats-grid">
+                                <div class="stats-item"><span class="stats-label">ISO</span><span class="stats-val"
+                                        id="timestamp-iso">-</span></div>
+                                <div class="stats-item"><span class="stats-label">Weekday</span><span class="stats-val"
+                                        id="timestamp-weekday">-</span></div>
+                                <div class="stats-item"><span class="stats-label">Date</span><span class="stats-val"
+                                        id="timestamp-date">-</span></div>
+                                <div class="stats-item"><span class="stats-label">Unix</span><span class="stats-val"
+                                        id="timestamp-unix">-</span></div>
+                            </div>
+                            <div class="result-box" id="timestamp-relative" style="margin-top: 12px;">-</div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- View: Math & Statistics -->
@@ -789,6 +834,49 @@
         // ==========================================
         // String Operations
         // ==========================================
+        async function runTextInsights() {
+            const left = document.getElementById('insight-a').value;
+            const right = document.getElementById('insight-b').value;
+
+            if (!left.trim() || !right.trim()) {
+                document.getElementById('insight-distance').innerText = '0';
+                document.getElementById('insight-similarity').innerText = '0.000';
+                document.getElementById('insight-length-a').innerText = '0';
+                document.getElementById('insight-length-b').innerText = '0';
+                document.getElementById('insight-preview').innerText = '-';
+                return;
+            }
+
+            try {
+                const resJson = await window.computeTextInsights(left, right);
+                const insight = JSON.parse(resJson);
+                document.getElementById('insight-distance').innerText = insight.distance;
+                document.getElementById('insight-similarity').innerText = insight.similarity.toFixed(3);
+                document.getElementById('insight-length-a').innerText = insight.length_a;
+                document.getElementById('insight-length-b').innerText = insight.length_b;
+                document.getElementById('insight-preview').innerText = insight.preview;
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function runTimestampAnalysis() {
+            const input = document.getElementById('timestamp-input').value.trim();
+            if (!input) return;
+
+            try {
+                const resJson = await window.analyzeTimestamp(input);
+                const insight = JSON.parse(resJson);
+                document.getElementById('timestamp-iso').innerText = insight.iso;
+                document.getElementById('timestamp-weekday').innerText = insight.weekday;
+                document.getElementById('timestamp-date').innerText = insight.date;
+                document.getElementById('timestamp-unix').innerText = insight.unix;
+                document.getElementById('timestamp-relative').innerText = insight.relative;
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
         async function runStringTransforms() {
             const input = document.getElementById('str-input').value;
 
@@ -1024,6 +1112,8 @@
 
         // Trigger on load
         runStringTransforms();
+        runTextInsights();
+        runTimestampAnalysis();
     </script>
 </body>
 

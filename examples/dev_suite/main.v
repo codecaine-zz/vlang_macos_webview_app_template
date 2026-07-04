@@ -2,13 +2,15 @@ import ttytm.webview { Event }
 import os
 import json
 import math
+import strings
+import time
 
 // Structs for JSON Store
 struct TodoItem {
 	id    int    @[json: 'id']
 	title string @[json: 'title']
 mut:
-	done bool   @[json: 'done']
+	done bool @[json: 'done']
 }
 
 struct TodoStore {
@@ -18,14 +20,87 @@ mut:
 
 // Stats holds the computed statistical properties of a dataset.
 struct Stats {
-	count    int    @[json: 'count']
-	min      f64    @[json: 'min']
-	max      f64    @[json: 'max']
-	sum      f64    @[json: 'sum']
-	mean     f64    @[json: 'mean']
-	median   f64    @[json: 'median']
-	variance f64    @[json: 'variance']
-	std_dev  f64    @[json: 'std_dev']
+	count    int @[json: 'count']
+	min      f64 @[json: 'min']
+	max      f64 @[json: 'max']
+	sum      f64 @[json: 'sum']
+	mean     f64 @[json: 'mean']
+	median   f64 @[json: 'median']
+	variance f64 @[json: 'variance']
+	std_dev  f64 @[json: 'std_dev']
+}
+
+struct TextInsight {
+	distance   int    @[json: 'distance']
+	similarity f64    @[json: 'similarity']
+	length_a   int    @[json: 'length_a']
+	length_b   int    @[json: 'length_b']
+	preview    string @[json: 'preview']
+}
+
+struct TimestampInsight {
+	iso      string @[json: 'iso']
+	weekday  string @[json: 'weekday']
+	date     string @[json: 'date']
+	unix     i64    @[json: 'unix']
+	relative string @[json: 'relative']
+}
+
+fn compute_text_insights(a string, b string) TextInsight {
+	left := a.trim_space()
+	right := b.trim_space()
+
+	if left == '' || right == '' {
+		return TextInsight{
+			distance:   0
+			similarity: 0.0
+			length_a:   left.len
+			length_b:   right.len
+			preview:    'Enter two strings to compare.'
+		}
+	}
+
+	normalized_a := left.to_lower()
+	normalized_b := right.to_lower()
+	distance := strings.levenshtein_distance(normalized_a, normalized_b)
+	similarity := strings.jaro_similarity(normalized_a, normalized_b)
+	preview := if distance == 0 { 'Identical text' } else { 'Uses ${distance} edit steps to align.' }
+
+	return TextInsight{
+		distance:   distance
+		similarity: similarity
+		length_a:   left.len
+		length_b:   right.len
+		preview:    preview
+	}
+}
+
+fn analyze_timestamp(raw string) TimestampInsight {
+	trimmed := raw.trim_space()
+	mut parsed := time.now()
+	if trimmed != '' {
+		parsed = time.parse_rfc3339(trimmed) or { time.now() }
+	}
+	parsed = parsed.local()
+
+	return TimestampInsight{
+		iso:      parsed.format_rfc3339()
+		weekday:  parsed.weekday_str()
+		date:     parsed.strftime('%Y-%m-%d')
+		unix:     parsed.unix()
+		relative: parsed.relative()
+	}
+}
+
+fn web_compute_text_insights(e &Event) string {
+	left := e.get_arg[string](0) or { '' }
+	right := e.get_arg[string](1) or { '' }
+	return json.encode(compute_text_insights(left, right))
+}
+
+fn web_analyze_timestamp(e &Event) string {
+	raw := e.get_arg[string](0) or { '' }
+	return json.encode(analyze_timestamp(raw))
 }
 
 fn quit_app(e &Event) string {
@@ -218,7 +293,7 @@ fn web_fibonacci(e &Event) string {
 	for i in 2 .. n {
 		sequence << sequence[i - 1] + sequence[i - 2]
 	}
-	
+
 	// Convert elements to strings to avoid potential overflow formatting in JS
 	mut strs := []string{}
 	for f in sequence {
@@ -320,7 +395,7 @@ fn web_add_todo(e &Event) string {
 	}
 
 	mut store := load_todos_from_disk()
-	
+
 	// Resolve next ID
 	mut max_id := 0
 	for item in store.items {
@@ -374,9 +449,11 @@ fn main() {
 
 	mut w := webview.create(debug: true)
 	w.bind('quitApp', quit_app)
-	
+
 	// Strings binds
 	w.bind('reverseString', web_reverse_string)
+	w.bind('computeTextInsights', web_compute_text_insights)
+	w.bind('analyzeTimestamp', web_analyze_timestamp)
 	w.bind('titleCase', web_title_case)
 	w.bind('isPalindrome', web_is_palindrome)
 	w.bind('truncateText', web_truncate)
